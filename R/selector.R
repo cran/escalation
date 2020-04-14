@@ -51,6 +51,7 @@
 #'   \item \code{\link{recommended_dose}}
 #'   \item \code{\link{continue}}
 #'   \item \code{\link{n_at_dose}}
+#'   \item \code{\link{n_at_recommended_dose}}
 #'   \item \code{\link{dose_indices}}
 #'   \item \code{\link{prob_administer}}
 #'   \item \code{\link{tox_at_dose}}
@@ -135,6 +136,7 @@
 #' fit %>% recommended_dose()
 #' fit %>% continue()
 #' fit %>% n_at_dose()
+#' fit %>% n_at_recommended_dose()
 #' fit %>% prob_administer()
 #' fit %>% tox_at_dose()
 #' fit %>% empiric_tox_rate()
@@ -147,26 +149,26 @@ selector <- function() {
 }
 
 #' @export
-tox_target.selector <- function(selector, ...) {
+tox_target.selector <- function(x, ...) {
   # By default:
   return(NULL)
 }
 
 #' @export
-num_tox.selector <- function(selector, ...) {
-  sum(tox(selector))
+num_tox.selector <- function(x, ...) {
+  sum(tox(x))
 }
 
 #' @export
 #' @importFrom tibble tibble
-model_frame.selector <- function(selector, ...) {
+model_frame.selector <- function(x, ...) {
 
-  if(num_patients(selector) > 0) {
+  if(num_patients(x) > 0) {
     tibble(
-      patient = seq(1, num_patients(selector)),
-      cohort = cohort(selector) %>% as.integer(),
-      dose = doses_given(selector) %>% as.integer(),
-      tox = tox(selector) %>% as.integer()
+      patient = seq(1, num_patients(x)),
+      cohort = cohort(x) %>% as.integer(),
+      dose = doses_given(x) %>% as.integer(),
+      tox = tox(x) %>% as.integer()
     )
   } else {
     tibble(
@@ -179,8 +181,8 @@ model_frame.selector <- function(selector, ...) {
 }
 
 #' @export
-dose_indices.selector <- function(selector, ...) {
-  n <- num_doses(selector)
+dose_indices.selector <- function(x, ...) {
+  n <- num_doses(x)
   if(n > 0) {
     return(1:n)
   } else {
@@ -188,15 +190,135 @@ dose_indices.selector <- function(selector, ...) {
   }
 }
 
+#' @importFrom purrr map_int
 #' @export
-prob_administer.selector <- function(selector, ...) {
-  n_doses <- num_doses(selector)
-  n_d <- n_at_dose(selector)
+n_at_dose.selector <- function(x, dose = NULL, ...) {
+  if(is.null(dose)) {
+    dose_indices <- 1:(num_doses(x))
+    map_int(dose_indices, ~ sum(doses_given(x) == .x))
+  } else if(dose == 'recommended') {
+    n_at_recommended_dose(x)
+  } else {
+    sum(doses_given(x) == dose)
+  }
+}
+
+#' @export
+n_at_recommended_dose.selector <- function(x, ...) {
+  rec_d <- recommended_dose(x)
+  if(is.na(rec_d)) {
+    return(NA)
+  }
+  else {
+    return(n_at_dose(x)[rec_d])
+  }
+}
+
+#' @export
+prob_administer.selector <- function(x, ...) {
+  n_doses <- num_doses(x)
+  n_d <- n_at_dose(x)
   names(n_d) <- 1:n_doses
   n_d / sum(n_d)
 }
 
 #' @export
-empiric_tox_rate.selector <- function(selector, ...) {
-  return(selector %>% tox_at_dose() / selector %>% n_at_dose())
+empiric_tox_rate.selector <- function(x, ...) {
+  return(x %>% tox_at_dose() / x %>% n_at_dose())
+}
+
+#' @export
+summary.selector <- function(object, ...) {
+  Dose <- N <- Tox <- EmpiricToxRate <- MeanProbTox <- MedianProbTox <- NULL
+  tibble(
+    Dose = dose_indices(object),
+    N = n_at_dose(object),
+    Tox = tox_at_dose(object),
+    EmpiricToxRate = empiric_tox_rate(object),
+    MeanProbTox = mean_prob_tox(object),
+    MedianProbTox = median_prob_tox(object)
+  )
+}
+
+#' @importFrom stringr str_to_title
+#' @importFrom tibble tibble
+#' @export
+print.selector <- function(x, ...) {
+
+  # Patient-level data
+  if(num_patients(x) > 0) {
+    cat('Patient-level data:\n')
+    df <- model_frame(x)
+    colnames(df) <- str_to_title(colnames(df))
+    print(df)
+  } else {
+    cat('No patients have been treated.\n')
+  }
+  cat('\n')
+
+  # Dose-level data
+  if(num_doses(x) > 0) {
+    cat('Dose-level data:\n')
+    df <- summary(x)
+    print(df, digits = 3)
+  } else {
+    cat('No doses are under investigation.\n')
+  }
+  cat('\n')
+
+  # Toxicity target
+  tt <- tox_target(x)
+  if(!is.null(tt)) {
+    if(!is.na(tt)) {
+      cat(paste0('The model targets a toxicity level of ', tt, '.'))
+      cat('\n')
+    }
+  }
+
+  # Dose recommendation and continuance
+  recd <- recommended_dose(x)
+  cont <- continue(x)
+  if(is.na(recd)) {
+    if(cont) {
+      cat(paste0('The model advocates continuing but recommends no dose.'))
+    } else {
+      cat(paste0('The model advocates stopping and recommending no dose.'))
+    }
+  } else {
+    if(cont) {
+      cat(paste0('The model advocates continuing at dose ', recd, '.'))
+    } else {
+      cat(paste0('The model advocates stopping and recommending dose ', recd,
+                 '.'))
+    }
+  }
+  cat('\n')
+
+  # cat(paste0('The dose most likely to be the MTD is ',
+  #            x$modal_mtd_candidate, '.'))
+  # cat('\n')
+  # cat(paste0('Model entropy: ', format(round(x$entropy, 2), nsmall = 2)))
+}
+
+#' @importFrom tibble as_tibble
+#' @export
+as_tibble.selector <- function(x, ...) {
+
+  dose_labs <- c('NoDose', as.character(dose_indices(x)))
+  rec_d <- recommended_dose(x)
+  if(is.na(rec_d)) {
+    rec_bool <- c(TRUE, rep(FALSE, num_doses(x)))
+  } else {
+    rec_bool <- c(FALSE, dose_indices(x) == rec_d)
+  }
+
+  tibble(
+    dose = ordered(dose_labs, levels = dose_labs),
+    tox = c(0, tox_at_dose(x)),
+    n = c(0, n_at_dose(x)),
+    empiric_tox_rate = c(0, empiric_tox_rate(x)),
+    mean_prob_tox = c(0, mean_prob_tox(x)),
+    median_prob_tox = c(0, median_prob_tox(x)),
+    recommended = rec_bool
+  )
 }

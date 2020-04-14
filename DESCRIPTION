@@ -1,8 +1,8 @@
 Package: escalation
 Type: Package
 Title: Modular Approach to Dose Finding Clinical Trials
-Version: 0.1.1
-Date: 2020-02-29
+Version: 0.1.2
+Date: 2020-04-14
 Authors@R: person("Kristian", "Brock", email = "kristian.brock@gmail.com", 
          role = c("aut", "cre"), comment = c(ORCID = "0000-0002-3921-0166"))
 Maintainer: Kristian Brock <kristian.brock@gmail.com>
@@ -25,12 +25,12 @@ Encoding: UTF-8
 LazyData: true
 Depends: magrittr
 Imports: dplyr, tidyr (>= 1.0), tidyselect, stringr, purrr, tibble,
-        gtools, dfcrm, BOIN
+        gtools, dfcrm, BOIN, ggplot2, DiagrammeR, RColorBrewer, viridis
 RoxygenNote: 7.0.2
 Suggests: testthat, knitr, rmarkdown, covr
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2020-02-29 15:10:05 UTC; brockk
+Packaged: 2020-04-14 13:00:30 UTC; brockk
 Author: Kristian Brock [aut, cre] (<https://orcid.org/0000-0002-3921-0166>)
 Repository: CRAN
-Date/Publication: 2020-03-08 17:10:02 UTC
+Date/Publication: 2020-04-14 15:10:02 UTC

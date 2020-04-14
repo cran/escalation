@@ -303,11 +303,16 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 
-<p>To provide dose selection decisions, the <code>escalation</code> package daisy-chains together objects that support a common interface, each deriving from type <code>selector</code>. We illustrate here that interface using a BOIN selector but the same functions will work on every type of dose selector in <code>escalation</code>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(escalation)</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co">#&gt; Loading required package: magrittr</span></a></code></pre></div>
+<!-- badges: start -->
+<p><a href="https://travis-ci.org/brockk/escalation"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MCIgaGVpZ2h0PSIyMCI+PGxpbmVhckdyYWRpZW50IGlkPSJhIiB4Mj0iMCIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1vcGFjaXR5PSIuMSIvPjwvbGluZWFyR3JhZGllbnQ+PHJlY3Qgcng9IjMiIHdpZHRoPSI5MCIgaGVpZ2h0PSIyMCIgZmlsbD0iIzU1NSIvPjxyZWN0IHJ4PSIzIiB4PSIzNyIgd2lkdGg9IjUzIiBoZWlnaHQ9IjIwIiBmaWxsPSIjNGMxIi8+PHBhdGggZmlsbD0iIzRjMSIgZD0iTTM3IDBoNHYyMGgtNHoiLz48cmVjdCByeD0iMyIgd2lkdGg9IjkwIiBoZWlnaHQ9IjIwIiBmaWxsPSJ1cmwoI2EpIi8+PGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiPjx0ZXh0IHg9IjE5LjUiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj5idWlsZDwvdGV4dD48dGV4dCB4PSIxOS41IiB5PSIxNCI+YnVpbGQ8L3RleHQ+PHRleHQgeD0iNjIuNSIgeT0iMTUiIGZpbGw9IiMwMTAxMDEiIGZpbGwtb3BhY2l0eT0iLjMiPnBhc3Npbmc8L3RleHQ+PHRleHQgeD0iNjIuNSIgeT0iMTQiPnBhc3Npbmc8L3RleHQ+PC9nPjwvc3ZnPg==" alt="Travis build status" /></a> <a href="https://codecov.io/gh/brockk/escalation?branch=master"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTIiIGhlaWdodD0iMjAiPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4Mj0iMCIgeTI9IjEwMCUiPgogICAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIgLz4KICAgICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3Atb3BhY2l0eT0iLjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPG1hc2sgaWQ9ImEiPgogICAgICAgIDxyZWN0IHdpZHRoPSIxMTIiIGhlaWdodD0iMjAiIHJ4PSIzIiBmaWxsPSIjZmZmIiAvPgogICAgPC9tYXNrPgogICAgPGcgbWFzaz0idXJsKCNhKSI+CiAgICAgICAgPHBhdGggZmlsbD0iIzU1NSIgZD0iTTAgMGg3NnYyMEgweiIgLz4KICAgICAgICA8cGF0aCBmaWxsPSIjYTRhYzE5IiBkPSJNNzYgMGgzNnYyMEg3NnoiIC8+CiAgICAgICAgPHBhdGggZmlsbD0idXJsKCNiKSIgZD0iTTAgMGgxMTJ2MjBIMHoiIC8+CiAgICA8L2c+CiAgICA8ZyBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iRGVqYVZ1IFNhbnMsVmVyZGFuYSxHZW5ldmEsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSI+CiAgICAgICAgPHRleHQgeD0iNDYiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj5jb2RlY292PC90ZXh0PgogICAgICAgIDx0ZXh0IHg9IjQ2IiB5PSIxNCI+Y29kZWNvdjwvdGV4dD4KICAgICAgICA8dGV4dCB4PSI5MyIgeT0iMTUiIGZpbGw9IiMwMTAxMDEiIGZpbGwtb3BhY2l0eT0iLjMiPjg5JTwvdGV4dD4KICAgICAgICA8dGV4dCB4PSI5MyIgeT0iMTQiPjg5JTwvdGV4dD4KICAgIDwvZz4KICAgIDxzdmcgdmlld0JveD0iMTIwIC04IDYwIDYwIj4KICAgICAgICA8cGF0aCBkPSJNMjMuMDEzIDBDMTAuMzMzLjAwOS4wMSAxMC4yMiAwIDIyLjc2MnYuMDU4bDMuOTE0IDIuMjc1LjA1My0uMDM2YTExLjI5MSAxMS4yOTEgMCAwIDEgOC4zNTItMS43NjcgMTAuOTExIDEwLjkxMSAwIDAgMSA1LjUgMi43MjZsLjY3My42MjQuMzgtLjgyOGMuMzY4LS44MDIuNzkzLTEuNTU2IDEuMjY0LTIuMjQuMTktLjI3Ni4zOTgtLjU1NC42MzctLjg1MWwuMzkzLS40OS0uNDg0LS40MDRhMTYuMDggMTYuMDggMCAwIDAtNy40NTMtMy40NjYgMTYuNDgyIDE2LjQ4MiAwIDAgMC03LjcwNS40NDlDNy4zODYgMTAuNjgzIDE0LjU2IDUuMDE2IDIzLjAzIDUuMDFjNC43NzkgMCA5LjI3MiAxLjg0IDEyLjY1MSA1LjE4IDIuNDEgMi4zODIgNC4wNjkgNS4zNSA0LjgwNyA4LjU5MWExNi41MyAxNi41MyAwIDAgMC00Ljc5Mi0uNzIzbC0uMjkyLS4wMDJhMTYuNzA3IDE2LjcwNyAwIDAgMC0xLjkwMi4xNGwtLjA4LjAxMmMtLjI4LjAzNy0uNTI0LjA3NC0uNzQ4LjExNS0uMTEuMDE5LS4yMTguMDQxLS4zMjcuMDYzLS4yNTcuMDUyLS41MS4xMDgtLjc1LjE2OWwtLjI2NS4wNjdhMTYuMzkgMTYuMzkgMCAwIDAtLjkyNi4yNzZsLS4wNTYuMDE4Yy0uNjgyLjIzLTEuMzYuNTExLTIuMDE2LjgzOGwtLjA1Mi4wMjZjLS4yOS4xNDUtLjU4NC4zMDUtLjg5OS40OWwtLjA2OS4wNGExNS41OTYgMTUuNTk2IDAgMCAwLTQuMDYxIDMuNDY2bC0uMTQ1LjE3NWMtLjI5LjM2LS41MjEuNjY2LS43MjMuOTYtLjE3LjI0Ny0uMzQuNTEzLS41NTIuODY0bC0uMTE2LjE5OWMtLjE3LjI5Mi0uMzIuNTctLjQ0OS44MjRsLS4wMy4wNTdhMTYuMTE2IDE2LjExNiAwIDAgMC0uODQzIDIuMDI5bC0uMDM0LjEwMmExNS42NSAxNS42NSAwIDAgMC0uNzg2IDUuMTc0bC4wMDMuMjE0YTIxLjUyMyAyMS41MjMgMCAwIDAgLjA0Ljc1NGMuMDA5LjExOS4wMi4yMzcuMDMyLjM1NS4wMTQuMTQ1LjAzMi4yOS4wNDkuNDMybC4wMS4wOGMuMDEuMDY3LjAxNy4xMzMuMDI2LjE5Ny4wMzQuMjQyLjA3NC40OC4xMTkuNzIuNDYzIDIuNDE5IDEuNjIgNC44MzYgMy4zNDUgNi45OWwuMDc4LjA5OC4wOC0uMDk1Yy42ODgtLjgxIDIuMzk1LTMuMzggMi41MzktNC45MjJsLjAwMy0uMDI5LS4wMTQtLjAyNWExMC43MjcgMTAuNzI3IDAgMCAxLTEuMjI2LTQuOTU2YzAtNS43NiA0LjU0NS0xMC41NDQgMTAuMzQzLTEwLjg5bC4zODEtLjAxNGExMS40MDMgMTEuNDAzIDAgMCAxIDYuNjUxIDEuOTU3bC4wNTQuMDM2IDMuODYyLTIuMjM3LjA1LS4wM3YtLjA1NmMuMDA2LTYuMDgtMi4zODQtMTEuNzkzLTYuNzI5LTE2LjA4OUMzNC45MzIgMi4zNjEgMjkuMTYgMCAyMy4wMTMgMCIgZmlsbD0iI0YwMUY3QSIgZmlsbC1ydWxlPSJldmVub2RkIi8+CiAgICA8L3N2Zz4KPC9zdmc+" alt="Codecov test coverage" /></a> <a href="https://cran.r-project.org/package=escalation"><img src="data:image/svg+xml; charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4NSIgaGVpZ2h0PSIyMCI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4Mj0iMCIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYmJiIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3Atb3BhY2l0eT0iLjEiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxtYXNrIGlkPSJhIj4KICAgIDxyZWN0IHdpZHRoPSI4NSIgaGVpZ2h0PSIyMCIgcng9IjMiIGZpbGw9IiNmZmYiLz4KICA8L21hc2s+CiAgPGcgbWFzaz0idXJsKCNhKSI+CiAgICA8cGF0aCBmaWxsPSIjNTU1IiBkPSJNMCAwaDQzdjIwSDB6Ii8+CiAgICA8cGF0aCBmaWxsPSIjNGMxIiBkPSJNNDMgMGg2M3YyMEg0M3oiLz4KICAgIDxwYXRoIGZpbGw9InVybCgjYikiIGQ9Ik0wIDBoODV2MjBIMHoiLz4KICA8L2c+CiAgPGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIKICAgICBmb250LWZhbWlseT0iRGVqYVZ1IFNhbnMsVmVyZGFuYSxHZW5ldmEsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSI+CiAgICA8dGV4dCB4PSIyMS41IiB5PSIxNSIgZmlsbD0iIzAxMDEwMSIgZmlsbC1vcGFjaXR5PSIuMyI+CiAgICAgIENSQU4KICAgIDwvdGV4dD4KICAgIDx0ZXh0IHg9IjIxLjUiIHk9IjE0Ij4KICAgICAgQ1JBTgogICAgPC90ZXh0PgogICAgPHRleHQgeD0iNjMiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj4KICAgICAgMC4xLjEKICAgIDwvdGV4dD4KICAgIDx0ZXh0IHg9IjYzIiB5PSIxNCI+CiAgICAgIDAuMS4xCiAgICA8L3RleHQ+CiAgPC9nPgo8L3N2Zz4=" alt="cran version" /></a> <img src="data:image/svg+xml; charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDkiIGhlaWdodD0iMjAiPgogIDxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDI9IjAiIHkyPSIxMDAlIj4KICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgPC9saW5lYXJHcmFkaWVudD4KICA8bWFzayBpZD0iYSI+CiAgICA8cmVjdCB3aWR0aD0iMTQ5IiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iI2ZmZiIvPgogIDwvbWFzaz4KICA8ZyBtYXNrPSJ1cmwoI2EpIj48cGF0aCBmaWxsPSIjNTU1IiBkPSJNMCAwaDcwdjIwSDB6Ii8+CiAgICA8cGF0aCBmaWxsPSIjMDA3ZWM2IiBkPSJNNzAgMGg3OXYyMEg3MHoiLz4KICAgIDxwYXRoIGZpbGw9InVybCgjYikiIGQ9Ik0wIDBoMTQ5djIwSDB6Ii8+CiAgPC9nPgogIDxnIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiCiAgICAgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiPgogICAgPHRleHQgeD0iMzYiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj4KICAgICAgZG93bmxvYWRzCiAgICA8L3RleHQ+CiAgICA8dGV4dCB4PSIzNiIgeT0iMTQiPgogICAgICBkb3dubG9hZHMKICAgIDwvdGV4dD4KICAgIDx0ZXh0IHg9IjEwOC41IiB5PSIxNSIgZmlsbD0iIzAxMDEwMSIgZmlsbC1vcGFjaXR5PSIuMyI+CiAgICAgIDQ1MS9tb250aAogICAgPC90ZXh0PgogICAgPHRleHQgeD0iMTA4LjUiIHk9IjE0Ij4KICAgICAgNDUxL21vbnRoCiAgICA8L3RleHQ+CiAgPC9nPgo8L3N2Zz4=" /> <img src="data:image/svg+xml; charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDgiIGhlaWdodD0iMjAiPgogIDxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDI9IjAiIHkyPSIxMDAlIj4KICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgPC9saW5lYXJHcmFkaWVudD4KICA8bWFzayBpZD0iYSI+CiAgICA8cmVjdCB3aWR0aD0iMTA4IiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iI2ZmZiIvPgogIDwvbWFzaz4KICA8ZyBtYXNrPSJ1cmwoI2EpIj48cGF0aCBmaWxsPSIjNTU1IiBkPSJNMCAwaDcwdjIwSDB6Ii8+CiAgICA8cGF0aCBmaWxsPSIjMDA3ZWM2IiBkPSJNNzAgMGgzOHYyMEg3MHoiLz4KICAgIDxwYXRoIGZpbGw9InVybCgjYikiIGQ9Ik0wIDBoMTA4djIwSDB6Ii8+CiAgPC9nPgogIDxnIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiCiAgICAgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiPgogICAgPHRleHQgeD0iMzYiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj4KICAgICAgZG93bmxvYWRzCiAgICA8L3RleHQ+CiAgICA8dGV4dCB4PSIzNiIgeT0iMTQiPgogICAgICBkb3dubG9hZHMKICAgIDwvdGV4dD4KICAgIDx0ZXh0IHg9Ijg4IiB5PSIxNSIgZmlsbD0iIzAxMDEwMSIgZmlsbC1vcGFjaXR5PSIuMyI+CiAgICAgIDU1OAogICAgPC90ZXh0PgogICAgPHRleHQgeD0iODgiIHk9IjE0Ij4KICAgICAgNTU4CiAgICA8L3RleHQ+CiAgPC9nPgo8L3N2Zz4=" /> <!-- badges: end --></p>
+<p>The <code>escalation</code> package by Kristian Brock. Documentation is hosted at <a href="https://brockk.github.io/escalation/" class="uri">https://brockk.github.io/escalation/</a></p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>To provide dose selection decisions, the <code>escalation</code> package daisy-chains together objects that support a common interface, each deriving from type <code>selector</code>. This vignette demonstrates the entire interface supported by <code>selector</code> objects. For the purpose of illustratration, we use a BOIN selector but the same functions will work on every type of dose selector in <code>escalation</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(escalation)</a></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">model &lt;-<span class="st"> </span><span class="kw">get_boin</span>(<span class="dt">num_doses =</span> <span class="dv">5</span>, <span class="dt">target =</span> <span class="fl">0.3</span>)</a>
 <a class="sourceLine" id="cb2-2" data-line-number="2">fit &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fit</span>(<span class="st">'1NN 2NN 3NT 2NT'</span>)</a></code></pre></div>
+</div>
 <div id="supported-interface" class="section level2">
 <h2>Supported Interface</h2>
 <p>Target toxicity rate:</p>
@@ -356,41 +361,93 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">continue</span>(fit)</a>
 <a class="sourceLine" id="cb13-2" data-line-number="2"><span class="co">#&gt; [1] TRUE</span></a></code></pre></div>
 <p>We infer from this that no stopping condition has yet been triggered.</p>
-<p>The total number of patients treated at each dose:</p>
+<p>The number of patients treated at each dose:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">n_at_dose</span>(fit)</a>
 <a class="sourceLine" id="cb14-2" data-line-number="2"><span class="co">#&gt; [1] 2 4 2 0 0</span></a></code></pre></div>
+<p>The number of patients treated at the recommended dose:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">n_at_recommended_dose</span>(fit)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">#&gt; [1] 4</span></a></code></pre></div>
 <p>The proportion of patients treated at each dose:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">prob_administer</span>(fit)</a>
-<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
-<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="co">#&gt; 0.25 0.50 0.25 0.00 0.00</span></a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">prob_administer</span>(fit)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="co">#&gt; 0.25 0.50 0.25 0.00 0.00</span></a></code></pre></div>
 <p>The total number of toxicities seen at each dose:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">tox_at_dose</span>(fit)</a>
-<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="co">#&gt; [1] 0 1 1 0 0</span></a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">tox_at_dose</span>(fit)</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="co">#&gt; [1] 0 1 1 0 0</span></a></code></pre></div>
 <p>The empirical toxicity rate, i.e. the number of toxicities divided by the number of patients:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">empiric_tox_rate</span>(fit)</a>
-<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="co">#&gt; [1] 0.00 0.25 0.50  NaN  NaN</span></a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">empiric_tox_rate</span>(fit)</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="co">#&gt; [1] 0.00 0.25 0.50  NaN  NaN</span></a></code></pre></div>
 <p>The model-derived expected toxicity rate at each dose:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">mean_prob_tox</span>(fit)</a>
-<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="co">#&gt; [1] 0.02 0.26 0.50   NA   NA</span></a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">mean_prob_tox</span>(fit)</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="co">#&gt; [1] 0.02 0.26 0.50   NA   NA</span></a></code></pre></div>
 <p>The BOIN design makes no estimate for doses it has not yet administered.</p>
 <p>The model-derived median toxicity rate at each dose:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">median_prob_tox</span>(fit)</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="co">#&gt; 0.01 0.21 0.50   NA   NA</span></a></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">median_prob_tox</span>(fit)</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="co">#&gt; 0.01 0.21 0.50   NA   NA</span></a></code></pre></div>
 <p>BOIN does not actually calculate posterior median estimates. Sometimes it will be necessary to return missing values if functionality is not supported by a model. Median estimates could be added to the BOIN class in due course.</p>
 <p>The model-derived quantile of the toxicity rate at each dose:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">prob_tox_quantile</span>(fit, <span class="fl">0.9</span>)</a>
-<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
-<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="co">#&gt; 0.05 0.54 0.89   NA   NA</span></a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">prob_tox_quantile</span>(fit, <span class="fl">0.9</span>)</a>
+<a class="sourceLine" id="cb21-2" data-line-number="2"><span class="co">#&gt;    1    2    3    4    5 </span></a>
+<a class="sourceLine" id="cb21-3" data-line-number="3"><span class="co">#&gt; 0.05 0.54 0.89   NA   NA</span></a></code></pre></div>
 <p>BOIN does not calculate this either. It could also be added.</p>
 <p>The posterior probability that the toxicity rate exceeds some threshold value, here 50%:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">prob_tox_exceeds</span>(fit, <span class="fl">0.5</span>)</a>
-<a class="sourceLine" id="cb21-2" data-line-number="2"><span class="co">#&gt; [1] 0.009391185 0.129051871 0.500000000          NA          NA</span></a></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">prob_tox_exceeds</span>(fit, <span class="fl">0.5</span>)</a>
+<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="co">#&gt; [1] 0.009391185 0.129051871 0.500000000          NA          NA</span></a></code></pre></div>
 <p>Once again, no estimate is made for non-administered doses. We see that the model estimates a trivial chance that the toxicity rate at the lowest dose exceeds 50%.</p>
 <p>Learn if this model supports sampling from the posterior:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">supports_sampling</span>(fit)</a>
-<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="kw">supports_sampling</span>(fit)</a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="co">#&gt; [1] FALSE</span></a></code></pre></div>
 <p>The BOIN model does not support sampling. If it did, we could run <code>prob_tox_samples(fit)</code>.</p>
+<p>We can also call some standard generic functions:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="kw">print</span>(fit)</a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="co">#&gt; Patient-level data:</span></a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"><span class="co">#&gt; # A tibble: 8 x 4</span></a>
+<a class="sourceLine" id="cb24-4" data-line-number="4"><span class="co">#&gt;   Patient Cohort  Dose   Tox</span></a>
+<a class="sourceLine" id="cb24-5" data-line-number="5"><span class="co">#&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></a>
+<a class="sourceLine" id="cb24-6" data-line-number="6"><span class="co">#&gt; 1       1      1     1     0</span></a>
+<a class="sourceLine" id="cb24-7" data-line-number="7"><span class="co">#&gt; 2       2      1     1     0</span></a>
+<a class="sourceLine" id="cb24-8" data-line-number="8"><span class="co">#&gt; 3       3      2     2     0</span></a>
+<a class="sourceLine" id="cb24-9" data-line-number="9"><span class="co">#&gt; 4       4      2     2     0</span></a>
+<a class="sourceLine" id="cb24-10" data-line-number="10"><span class="co">#&gt; 5       5      3     3     0</span></a>
+<a class="sourceLine" id="cb24-11" data-line-number="11"><span class="co">#&gt; 6       6      3     3     1</span></a>
+<a class="sourceLine" id="cb24-12" data-line-number="12"><span class="co">#&gt; 7       7      4     2     0</span></a>
+<a class="sourceLine" id="cb24-13" data-line-number="13"><span class="co">#&gt; 8       8      4     2     1</span></a>
+<a class="sourceLine" id="cb24-14" data-line-number="14"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb24-15" data-line-number="15"><span class="co">#&gt; Dose-level data:</span></a>
+<a class="sourceLine" id="cb24-16" data-line-number="16"><span class="co">#&gt; # A tibble: 5 x 6</span></a>
+<a class="sourceLine" id="cb24-17" data-line-number="17"><span class="co">#&gt;    Dose     N   Tox EmpiricToxRate MeanProbTox MedianProbTox</span></a>
+<a class="sourceLine" id="cb24-18" data-line-number="18"><span class="co">#&gt;   &lt;int&gt; &lt;int&gt; &lt;int&gt;          &lt;dbl&gt;       &lt;dbl&gt;         &lt;dbl&gt;</span></a>
+<a class="sourceLine" id="cb24-19" data-line-number="19"><span class="co">#&gt; 1     1     2     0           0           0.02          0.01</span></a>
+<a class="sourceLine" id="cb24-20" data-line-number="20"><span class="co">#&gt; 2     2     4     1           0.25        0.26          0.21</span></a>
+<a class="sourceLine" id="cb24-21" data-line-number="21"><span class="co">#&gt; 3     3     2     1           0.5         0.5           0.5 </span></a>
+<a class="sourceLine" id="cb24-22" data-line-number="22"><span class="co">#&gt; 4     4     0     0         NaN          NA            NA   </span></a>
+<a class="sourceLine" id="cb24-23" data-line-number="23"><span class="co">#&gt; 5     5     0     0         NaN          NA            NA   </span></a>
+<a class="sourceLine" id="cb24-24" data-line-number="24"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb24-25" data-line-number="25"><span class="co">#&gt; The model targets a toxicity level of 0.3.</span></a>
+<a class="sourceLine" id="cb24-26" data-line-number="26"><span class="co">#&gt; The model advocates continuing at dose 2.</span></a></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">summary</span>(fit)</a>
+<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="co">#&gt; # A tibble: 5 x 6</span></a>
+<a class="sourceLine" id="cb25-3" data-line-number="3"><span class="co">#&gt;    Dose     N   Tox EmpiricToxRate MeanProbTox MedianProbTox</span></a>
+<a class="sourceLine" id="cb25-4" data-line-number="4"><span class="co">#&gt;   &lt;int&gt; &lt;int&gt; &lt;int&gt;          &lt;dbl&gt;       &lt;dbl&gt;         &lt;dbl&gt;</span></a>
+<a class="sourceLine" id="cb25-5" data-line-number="5"><span class="co">#&gt; 1     1     2     0           0           0.02          0.01</span></a>
+<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="co">#&gt; 2     2     4     1           0.25        0.26          0.21</span></a>
+<a class="sourceLine" id="cb25-7" data-line-number="7"><span class="co">#&gt; 3     3     2     1           0.5         0.5           0.5 </span></a>
+<a class="sourceLine" id="cb25-8" data-line-number="8"><span class="co">#&gt; 4     4     0     0         NaN          NA            NA   </span></a>
+<a class="sourceLine" id="cb25-9" data-line-number="9"><span class="co">#&gt; 5     5     0     0         NaN          NA            NA</span></a></code></pre></div>
+<p>and cast it to a tidyverse <code>tibble</code>:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="kw">library</span>(tibble)</a>
+<a class="sourceLine" id="cb26-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb26-3" data-line-number="3"><span class="kw">as_tibble</span>(fit)</a>
+<a class="sourceLine" id="cb26-4" data-line-number="4"><span class="co">#&gt; # A tibble: 6 x 7</span></a>
+<a class="sourceLine" id="cb26-5" data-line-number="5"><span class="co">#&gt;   dose     tox     n empiric_tox_rate mean_prob_tox median_prob_tox recommended</span></a>
+<a class="sourceLine" id="cb26-6" data-line-number="6"><span class="co">#&gt;   &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;lgl&gt;      </span></a>
+<a class="sourceLine" id="cb26-7" data-line-number="7"><span class="co">#&gt; 1 NoDose     0     0             0             0               0    FALSE      </span></a>
+<a class="sourceLine" id="cb26-8" data-line-number="8"><span class="co">#&gt; 2 1          0     2             0             0.02            0.01 FALSE      </span></a>
+<a class="sourceLine" id="cb26-9" data-line-number="9"><span class="co">#&gt; 3 2          1     4             0.25          0.26            0.21 TRUE       </span></a>
+<a class="sourceLine" id="cb26-10" data-line-number="10"><span class="co">#&gt; 4 3          1     2             0.5           0.5             0.5  FALSE      </span></a>
+<a class="sourceLine" id="cb26-11" data-line-number="11"><span class="co">#&gt; 5 4          0     0           NaN            NA              NA    FALSE      </span></a>
+<a class="sourceLine" id="cb26-12" data-line-number="12"><span class="co">#&gt; 6 5          0     0           NaN            NA              NA    FALSE</span></a></code></pre></div>
 </div>
 
 

@@ -4,7 +4,7 @@ test_that('demand_n_at_dose_selector does what it should.', {
   skeleton <- c(0.05, 0.1, 0.25, 0.4, 0.6)
   target <- 0.25
 
-  # To see this class work, we have to see it used in conjucntion with a class
+  # To see this class work, we have to see it used in conjunction with a class
   # that would like to stop. We sue stop_at_n for simplicity.
 
   # Example 1 - demand n at any dose
@@ -109,6 +109,7 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
 
   expect_equal(recommended_dose(x), 5)
   expect_true(is.integer(recommended_dose(x)))
+  expect_equal(length(recommended_dose(x)), 1)
 
   expect_equal(continue(x), TRUE)
   expect_true(is.logical(continue(x)))
@@ -116,6 +117,22 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
   expect_equal(n_at_dose(x), c(3,3,0,0,0))
   expect_true(is.integer(n_at_dose(x)))
   expect_equal(length(n_at_dose(x)), num_doses(x))
+
+  expect_equal(n_at_dose(x, dose = 0), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 0)))
+  expect_equal(length(n_at_dose(x, dose = 0)), 1)
+
+  expect_equal(n_at_dose(x, dose = 1), 3)
+  expect_true(is.integer(n_at_dose(x, dose = 1)))
+  expect_equal(length(n_at_dose(x, dose = 1)), 1)
+
+  expect_equal(n_at_dose(x, dose = 'recommended'), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 'recommended')))
+  expect_equal(length(n_at_dose(x, dose = 'recommended')), 1)
+
+  expect_equal(n_at_recommended_dose(x), 0)
+  expect_true(is.integer(n_at_recommended_dose(x)))
+  expect_equal(length(n_at_recommended_dose(x)), 1)
 
   expect_equal(unname(prob_administer(x)), c(0.5,0.5,0,0,0))
   expect_true(is.numeric(prob_administer(x)))
@@ -183,6 +200,7 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
 
   expect_equal(recommended_dose(x), 1)
   expect_true(is.integer(recommended_dose(x)))
+  expect_equal(length(recommended_dose(x)), 1)
 
   expect_equal(continue(x), TRUE)
   expect_true(is.logical(continue(x)))
@@ -190,6 +208,22 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
   expect_equal(n_at_dose(x), c(0,0,0,0,0))
   expect_true(is.integer(n_at_dose(x)))
   expect_equal(length(n_at_dose(x)), num_doses(x))
+
+  expect_equal(n_at_dose(x, dose = 0), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 0)))
+  expect_equal(length(n_at_dose(x, dose = 0)), 1)
+
+  expect_equal(n_at_dose(x, dose = 1), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 1)))
+  expect_equal(length(n_at_dose(x, dose = 1)), 1)
+
+  expect_equal(n_at_dose(x, dose = 'recommended'), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 'recommended')))
+  expect_equal(length(n_at_dose(x, dose = 'recommended')), 1)
+
+  expect_equal(n_at_recommended_dose(x), 0)
+  expect_true(is.integer(n_at_recommended_dose(x)))
+  expect_equal(length(n_at_recommended_dose(x)), 1)
 
   expect_true(is.numeric(prob_administer(x)))
   expect_equal(length(prob_administer(x)), num_doses(x))
@@ -263,6 +297,7 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
 
   expect_equal(recommended_dose(x), 2)
   expect_true(is.integer(recommended_dose(x)))
+  expect_equal(length(recommended_dose(x)), 1)
 
   expect_equal(continue(x), TRUE)
   expect_true(is.logical(continue(x)))
@@ -270,6 +305,22 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
   expect_equal(n_at_dose(x), c(3,3,0,0,0))
   expect_true(is.integer(n_at_dose(x)))
   expect_equal(length(n_at_dose(x)), num_doses(x))
+
+  expect_equal(n_at_dose(x, dose = 0), 0)
+  expect_true(is.integer(n_at_dose(x, dose = 0)))
+  expect_equal(length(n_at_dose(x, dose = 0)), 1)
+
+  expect_equal(n_at_dose(x, dose = 1), 3)
+  expect_true(is.integer(n_at_dose(x, dose = 1)))
+  expect_equal(length(n_at_dose(x, dose = 1)), 1)
+
+  expect_equal(n_at_dose(x, dose = 'recommended'), 3)
+  expect_true(is.integer(n_at_dose(x, dose = 'recommended')))
+  expect_equal(length(n_at_dose(x, dose = 'recommended')), 1)
+
+  expect_equal(n_at_recommended_dose(x), 3)
+  expect_true(is.integer(n_at_recommended_dose(x)))
+  expect_equal(length(n_at_recommended_dose(x)), 1)
 
   expect_equal(unname(prob_administer(x)), c(0.5,0.5,0,0,0))
   expect_true(is.numeric(prob_administer(x)))
@@ -298,5 +349,28 @@ test_that('demand_n_at_dose_selector supports correct interface.', {
 
   expect_true(is.data.frame(prob_tox_samples(x)))
   expect_true(is.data.frame(prob_tox_samples(x, tall = TRUE)))
+
+})
+
+
+test_that('demand_n_at_dose_selector propagates stopping by parent.', {
+
+  skeleton <- c(0.05, 0.1, 0.25, 0.4, 0.6)
+  target <- 0.25
+
+  # Example 1 - stop for excess toxicity and demand n at dose:
+  model1 <- get_dfcrm(skeleton = skeleton, target = target) %>%
+    stop_when_too_toxic(dose = 1, tox_threshold = 0.35, confidence = 0.8) %>%
+    demand_n_at_dose(n = 9, dose = 'recommended')
+
+  # Continue and recommend dose in absence of excess toxicity:
+  fit1 <- model1 %>% fit('1NTT')
+  expect_true(continue(fit1))
+  expect_false(is.na(recommended_dose(fit1)))
+
+  # Stop and recommend no dose in presence of excess toxicity:
+  fit2 <- model1 %>% fit('1NTT 1TTN')
+  expect_false(continue(fit2))
+  expect_true(is.na(recommended_dose(fit2)))
 
 })
