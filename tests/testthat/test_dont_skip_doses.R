@@ -26,6 +26,16 @@ test_that('dont_skip_selector does what it should.', {
   expect_equal(recommended_dose(fit0), recommended_dose(fit2))
   expect_equal(continue(fit0), continue(fit2))
 
+  ## Handle a parent that wants to stop
+  model3 <- get_dfcrm(skeleton = skeleton, target = target) %>%
+    stop_when_too_toxic(dose = 1, tox_threshold = target, confidence = 0.9) %>%
+    dont_skip_doses(when_escalating = TRUE, when_deescalating = TRUE)
+  fit3 <- model3 %>% fit('1TTT')
+  expect_true(is.na(recommended_dose(fit3)))
+  expect_false(continue(fit3))
+
+
+
 
   # De-escalation CRM example
 
@@ -47,6 +57,14 @@ test_that('dont_skip_selector does what it should.', {
   fit5 <- model2 %>% fit('1NNN 2N 3TTT')
   expect_equal(recommended_dose(fit3), recommended_dose(fit5))
   expect_equal(continue(fit3), continue(fit5))
+
+  ## Handle a parent that wants to stop
+  model6 <- get_dfcrm(skeleton = skeleton, target = target) %>%
+    stop_when_too_toxic(dose = 1, tox_threshold = target, confidence = 0.9) %>%
+    dont_skip_doses(when_escalating = TRUE, when_deescalating = TRUE)
+  fit6 <- model6 %>% fit('1TTT 2N 3TTT')
+  expect_true(is.na(recommended_dose(fit6)))
+  expect_false(continue(fit6))
 })
 
 
@@ -122,6 +140,10 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.integer(n_at_recommended_dose(x)))
   expect_equal(length(n_at_recommended_dose(x)), 1)
 
+  expect_equal(is_randomising(x), FALSE)
+  expect_true(is.logical(is_randomising(x)))
+  expect_equal(length(is_randomising(x)), 1)
+
   expect_equal(unname(prob_administer(x)), c(0.5,0.5,0,0,0))
   expect_true(is.numeric(prob_administer(x)))
   expect_equal(length(prob_administer(x)), num_doses(x))
@@ -139,6 +161,9 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.numeric(median_prob_tox(x)))
   expect_equal(length(median_prob_tox(x)), num_doses(x))
 
+  expect_true(is.logical(dose_admissible(x)))
+  expect_equal(length(dose_admissible(x)), num_doses(x))
+
   expect_true(is.numeric(prob_tox_quantile(x, p = 0.9)))
   expect_equal(length(prob_tox_quantile(x, p = 0.9)), num_doses(x))
 
@@ -149,6 +174,12 @@ test_that('dont_skip_selector supports correct interface.', {
 
   expect_true(is.data.frame(prob_tox_samples(x)))
   expect_true(is.data.frame(prob_tox_samples(x, tall = TRUE)))
+
+  # Expect summary to not error. This is how that is tested, apparently:
+  expect_error(summary(x), NA)
+  expect_output(print(x))
+  expect_true(tibble::is_tibble(as_tibble(x)))
+  expect_true(nrow(as_tibble(x)) >= num_doses(x))
 
 
 
@@ -214,6 +245,10 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.integer(n_at_recommended_dose(x)))
   expect_equal(length(n_at_recommended_dose(x)), 1)
 
+  expect_equal(is_randomising(x), FALSE)
+  expect_true(is.logical(is_randomising(x)))
+  expect_equal(length(is_randomising(x)), 1)
+
   expect_true(is.numeric(prob_administer(x)))
   expect_equal(length(prob_administer(x)), num_doses(x))
 
@@ -230,6 +265,9 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.numeric(median_prob_tox(x)))
   expect_equal(length(median_prob_tox(x)), num_doses(x))
 
+  expect_true(is.logical(dose_admissible(x)))
+  expect_equal(length(dose_admissible(x)), num_doses(x))
+
   expect_true(is.numeric(prob_tox_quantile(x, p = 0.9)))
   expect_equal(length(prob_tox_quantile(x, p = 0.9)), num_doses(x))
 
@@ -240,6 +278,12 @@ test_that('dont_skip_selector supports correct interface.', {
 
   expect_true(is.data.frame(prob_tox_samples(x)))
   expect_true(is.data.frame(prob_tox_samples(x, tall = TRUE)))
+
+  # Expect summary to not error. This is how that is tested, apparently:
+  expect_error(summary(x), NA)
+  expect_output(print(x))
+  expect_true(tibble::is_tibble(as_tibble(x)))
+  expect_true(nrow(as_tibble(x)) >= num_doses(x))
 
 
 
@@ -312,6 +356,10 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.integer(n_at_recommended_dose(x)))
   expect_equal(length(n_at_recommended_dose(x)), 1)
 
+  expect_equal(is_randomising(x), FALSE)
+  expect_true(is.logical(is_randomising(x)))
+  expect_equal(length(is_randomising(x)), 1)
+
   expect_equal(unname(prob_administer(x)), c(0.5,0.5,0,0,0))
   expect_true(is.numeric(prob_administer(x)))
   expect_equal(length(prob_administer(x)), num_doses(x))
@@ -329,6 +377,9 @@ test_that('dont_skip_selector supports correct interface.', {
   expect_true(is.numeric(median_prob_tox(x)))
   expect_equal(length(median_prob_tox(x)), num_doses(x))
 
+  expect_true(is.logical(dose_admissible(x)))
+  expect_equal(length(dose_admissible(x)), num_doses(x))
+
   expect_true(is.numeric(prob_tox_quantile(x, p = 0.9)))
   expect_equal(length(prob_tox_quantile(x, p = 0.9)), num_doses(x))
 
@@ -339,5 +390,11 @@ test_that('dont_skip_selector supports correct interface.', {
 
   expect_true(is.data.frame(prob_tox_samples(x)))
   expect_true(is.data.frame(prob_tox_samples(x, tall = TRUE)))
+
+  # Expect summary to not error. This is how that is tested, apparently:
+  expect_error(summary(x), NA)
+  expect_output(print(x))
+  expect_true(tibble::is_tibble(as_tibble(x)))
+  expect_true(nrow(as_tibble(x)) >= num_doses(x))
 
 })

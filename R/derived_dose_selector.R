@@ -47,8 +47,18 @@ n_at_dose.derived_dose_selector <- function(x, ...) {
 }
 
 #' @export
+is_randomising.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% is_randomising(...))
+}
+
+#' @export
 tox_at_dose.derived_dose_selector <- function(x, ...) {
   return(x$parent %>% tox_at_dose(...))
+}
+
+#' @export
+eff_at_dose.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% eff_at_dose(...))
 }
 
 #' @export
@@ -67,6 +77,26 @@ median_prob_tox.derived_dose_selector <- function(x, ...) {
 }
 
 #' @export
+empiric_eff_rate.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% empiric_eff_rate(...))
+}
+
+#' @export
+mean_prob_eff.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% mean_prob_eff(...))
+}
+
+#' @export
+median_prob_eff.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% median_prob_eff(...))
+}
+
+#' @export
+dose_admissible.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% dose_admissible(...))
+}
+
+#' @export
 prob_tox_quantile.derived_dose_selector <- function(x, p, ...) {
   return(x$parent %>% prob_tox_quantile(p, ...))
 }
@@ -77,6 +107,16 @@ prob_tox_exceeds.derived_dose_selector <- function(x, threshold, ...) {
 }
 
 #' @export
+prob_eff_quantile.derived_dose_selector <- function(x, p, ...) {
+  return(x$parent %>% prob_eff_quantile(p, ...))
+}
+
+#' @export
+prob_eff_exceeds.derived_dose_selector <- function(x, threshold, ...) {
+  return(x$parent %>% prob_eff_exceeds(threshold, ...))
+}
+
+#' @export
 supports_sampling.derived_dose_selector <- function(x, ...) {
   return(supports_sampling(x$parent))
 }
@@ -84,4 +124,9 @@ supports_sampling.derived_dose_selector <- function(x, ...) {
 #' @export
 prob_tox_samples.derived_dose_selector <- function(x, tall = FALSE, ...) {
   return(prob_tox_samples(x$parent, tall = tall, ...))
+}
+
+#' @export
+prob_eff_samples.derived_dose_selector <- function(x, tall = FALSE, ...) {
+  return(prob_eff_samples(x$parent, tall = tall, ...))
 }

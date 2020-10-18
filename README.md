@@ -27,11 +27,21 @@ like the continual reassessment method (CRM), the Bayesian optimal
 interval design (BOIN), and the perennial 3+3:
 
   - `get_dfcrm()`
+  - `get_trialr_crm()`
+  - `get_trialr_nbg()`
+  - `get_tpi()`
+  - `get_mtpi()`
   - `get_boin()`
+  - `get_trialr_efftox()`
+  - `get_wages_and_tait()`
   - `get_three_plus_three()`
 
-These functions fetch model fitting code. Largely, this is imported from
-existing R packages. These approaches can then be augmented with extra
+These functions fetch model fitting objects. Where possible, technical
+implementations are imported from existing R packages like `dfcrm`,
+`trialr`, and `BOIN`. Where no external implementations is available
+however, methods are implemented natively in `escalation`.
+
+These dose-finding approaches can then be augmented with extra
 behaviours to specialise the dose selection process. For example, we can
 add behaviours to prevent skipping doses, or to stop when we reach a
 certain sample size. `escalation` supports the following behaviours:
@@ -40,7 +50,7 @@ certain sample size. `escalation` supports the following behaviours:
   - `stop_at_n()`
   - `stop_when_n_at_dose()`
   - `stop_when_too_toxic()`
-  - `stop_when_ci_covered()`
+  - `stop_when_tox_ci_covered()`
   - `demand_n_at_dose()`
   - `try_rescue_dose()`
   - `follow_path()`
@@ -134,23 +144,31 @@ performing this core role are:
 
   - `get_dfcrm()`, using the model-fitting code from
     [`dfcrm`](https://cran.r-project.org/package=dfcrm)
+  - `get_trialr_crm()` using the model-fitting code from
+    [`trialr`](https://cran.r-project.org/package=trialr)
+  - `get_trialr_nbg()`
   - `get_boin()` using the model-fitting code from
     [`BOIN`](https://cran.r-project.org/package=BOIN)
+  - `get_tpi()`
+  - `get_mtpi()`
+  - `get_trialr_efftox()`
+  - `get_wages_and_tait()`
   - `get_three_plus_three()`
   - and `follow_path()`
 
-These last two are implemented natively in `escalation`. We look at each
-now.
+Where indicated these methods rely on external packages. Otherwise,
+methods are implemented natively in `escalation`. We look at each now.
 
 ### get\_dfcrm
 
-The continual reassessment method (O’Quigley, Pepe, and Fisher 1990) is
-implemented in the [`dfcrm`](https://CRAN.R-project.org/package=dfcrm)
-package by Cheung (2013). The very least information we need to provide
-is a dose-toxicity skeleton, and our target toxicity level. The skeleton
-represents our prior beliefs on the probabilities of toxicity at each of
-the doses under investigation. The model iteratively seeks a dose with
-toxicity probability close to the target.
+The continual reassessment method (O’Quigley, Pepe, and Fisher 1990)
+(CRM) is implemented in the
+[`dfcrm`](https://CRAN.R-project.org/package=dfcrm) package by Cheung
+(2013). The very least information we need to provide is a dose-toxicity
+skeleton, and our target toxicity level. The skeleton represents our
+prior beliefs on the probabilities of toxicity at each of the doses
+under investigation. The model iteratively seeks a dose with toxicity
+probability close to the target.
 
 For illustration, let us say we have
 
@@ -226,11 +244,206 @@ fit %>% recommended_dose()
 `intcpt` and `logistic` are the parameter names chosen by the authors of
 `dfcrm`.
 
+### get\_trialr\_crm
+
+We could instead fit the CRM models above using the
+[`trialr`](https://cran.r-project.org/package=trialr) package by (@
+Brock 2019; Brock 2020).
+
+Reusing the `skeleton` and `target` variables defined above, we fit the
+same empiric model
+
+``` r
+model <- get_trialr_crm(skeleton = skeleton, target = target, model = 'empiric',
+                        beta_sd = sqrt(1.34))
+fit <- model %>% fit('2NNN')
+```
+
+The `dfcrm` package, unless told otherwise, assumes that you want an
+empiric model where the prior variance for \(\beta\) is 1.34. In the
+`trialr` package, no such assumptions are made so we had to specify
+those variables.
+
+All we have changed is the method of inference. `dfcrm` uses numerical
+integration to calculate posterior statistics and plugs those into the
+dose-toxicity function. In contrast, `trialr` fits the model using
+Hamiltonian MCMC sampling via `Stan`. Thankfully, the two models agree
+on the desired next dose:
+
+``` r
+fit %>% recommended_dose()
+```
+
+    ## [1] 4
+
+and that the trial should continue:
+
+``` r
+fit %>% continue()
+```
+
+    ## [1] TRUE
+
+The added bonus we get from the `trialr` fit, however, is those samples
+from the posterior distribution:
+
+``` r
+fit %>% prob_tox_samples() %>% head(10)
+```
+
+    ## # A tibble: 10 x 6
+    ##    .draw           `1`         `2`       `3`     `4`    `5`
+    ##    <chr>         <dbl>       <dbl>     <dbl>   <dbl>  <dbl>
+    ##  1 1     0.174         0.261       0.445     0.586   0.742 
+    ##  2 2     0.0649        0.122       0.282     0.433   0.627 
+    ##  3 3     0.0000000950  0.00000400  0.000563  0.00711 0.0635
+    ##  4 4     0.00000000140 0.000000156 0.0000799 0.00196 0.0309
+    ##  5 5     0.0523        0.103       0.255     0.406   0.605 
+    ##  6 6     0.00463       0.0161      0.0831    0.193   0.400 
+    ##  7 7     0.00161       0.00714     0.0510    0.140   0.334 
+    ##  8 8     0.0265        0.0614      0.186     0.329   0.538 
+    ##  9 9     0.00860       0.0259      0.111     0.234   0.444 
+    ## 10 10    0.00902       0.0268      0.113     0.237   0.448
+
+That facilitates really flexible inference. For example, what is the
+probability that toxicity at dose 3 is at least 5% greater than that at
+dose 2? Simple to answer using the posterior samples:
+
+``` r
+library(dplyr)
+fit %>% prob_tox_samples() %>% 
+  summarise(prob = mean(`3` > `2` + 0.05))
+```
+
+    ## # A tibble: 1 x 1
+    ##    prob
+    ##   <dbl>
+    ## 1 0.591
+
+‘More likely than not’, is the answer.
+
+See the Continual Reassessment Method vignette for more details.
+
+### get\_trialr\_nbg
+
+The two-parameter logistic dose-escalation method of Neuenschwander,
+Branson, and Gsponer (2008) (NBG) is implemented in the
+[`trialr`](https://CRAN.R-project.org/package=trialr) package by Brock
+(2020).
+
+The very least information we need to provide is a vector of the doses
+under investigation, a reference dose-level \(d^*\), our target toxicity
+level, and priors on the logit model intercept, \(\alpha\), and dose
+gradient, \(\beta\).
+
+For illustration, let us reproduce the notorious example in Figure 1 of
+Neuenschwander, Branson, and Gsponer (2008) with 15 doses:
+
+``` r
+dose <- c(1, 2.5, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250)
+outcomes <- '1NNN 2NNNN 3NNNN 4NNNN 7TT'
+
+fit <- get_trialr_nbg(real_doses = dose, d_star = 250, target = 0.3,
+                      alpha_mean = 2.15, alpha_sd = 0.84,
+                      beta_mean = 0.52, beta_sd = 0.8, seed = 2020) %>% 
+  fit(outcomes)
+```
+
+Sticking at dose 7 is the recommendation:
+
+``` r
+fit %>% recommended_dose()
+```
+
+    ## [1] 7
+
+However, we see that it is a close call as to which dose is closest to
+the target toxicity level:
+
+``` r
+fit %>% mean_prob_tox()
+```
+
+    ##  [1] 0.01258690 0.03252256 0.06752086 0.13847209 0.20636157 0.26917718
+    ##  [7] 0.32637010 0.37801151 0.46612242 0.53711249 0.66158702 0.73901450
+    ## [13] 0.82594636 0.87171076 0.89929305
+
+This is perhaps unsurprising in a situation with so many doses.
+
+See the Neuenschwander, Branson & Gsponer vignette for more details.
+
+### get\_tpi
+
+The Toxicity Probability Interval (TPI) method was introduced by Ji, Li,
+and Bekele (2007). The model requires a few parameters:
+
+``` r
+model <- get_tpi(num_doses = 5, target = 0.25, k1 = 1, k2 = 1.5, 
+                 exclusion_certainty = 0.95)
+```
+
+The model can be fit to outcomes in the usual way:
+
+``` r
+fit <- model %>% fit('1NNT') 
+```
+
+and the returned model fit obeys the same interface as the other classes
+described here. For instance, the dose recommended for the next cohort
+is:
+
+``` r
+fit %>% recommended_dose()
+```
+
+    ## [1] 1
+
+See the Toxicity Probability Interval Design vignette for more
+information.
+
+### get\_mtpi
+
+The Modified Toxicity Probability Interval (mTPI) method was introduced
+by Ji et al. (2010). It is generally simpler to implement than TPI
+because the \(\epsilon1\) and \(\epsilon2\) parameters have the
+intuitive interpretation of forming the bounds of the interval that we
+regard as containing doses equivalent to the target dose. For instance,
+if we target a dose with toxicity probability equal to 25%, but would
+judge doses in the region (20%, 30%) to be satisfactorily toxic, we run:
+
+``` r
+model <- get_mtpi(num_doses = 5, target = 0.25, 
+                  epsilon1 = 0.05, epsilon2 = 0.05, exclusion_certainty = 0.95)
+```
+
+In this parameterisation, we exclude doses if we are 95% a-posteriori
+sure that the associated toxicity rate exceeds the target.
+
+We fit the model to outcomes:
+
+``` r
+fit <- model %>% fit('1NNT') 
+```
+
+and learn that the recommended next dose is
+
+``` r
+fit %>% recommended_dose()
+```
+
+    ## [1] 1
+
+dose 1, in accordance with Figure 2 of Ji et al. (2010).
+
+See the Modified Toxicity Probability Interval Design vignette for more
+information.
+
 ### get\_boin
 
-`escalate` also implements the BOIN dose-finding design by Liu and Yuan
-(2015) via the [`BOIN`](https://CRAN.R-project.org/package=BOIN) package
-(Yuan and Liu 2018).
+`escalate` also implements the Bayesian Optimal Interval (BOIN)
+dose-finding design by Liu and Yuan (2015) via the
+[`BOIN`](https://CRAN.R-project.org/package=BOIN) package (Yuan and Liu
+2018).
 
 In contrast to CRM, BOIN does not require a dose-toxicity skeleton. In
 its simplest case, it requires merely the number of doses under
@@ -314,6 +527,8 @@ get_boin(num_doses = 5, target = target) %>%
 
 The parameter names `p.saf` and `p.tox` were chosen by the authors of
 the `BOIN` package.
+
+See the Bayesian Optimal Interval Design vignette for more information.
 
 ### get\_three\_plus\_three
 
@@ -1021,13 +1236,9 @@ devtools::install_github("brockk/escalation")
 
 # Future Plans
 
-I plan to add model-fitting functions for:
-
-  - CRM and EffTox via
-    [trialr](https://cran.r-project.org/package=trialr)
-  - CRM via [bcrm](https://cran.r-project.org/package=bcrm)
-  - EWOC via [ewoc](https://cran.r-project.org/package=ewoc)
-  - mTPI once I discover how that design is implemented in R.
+I plan to add model-fitting functions for EWOC via
+[ewoc](https://cran.r-project.org/package=ewoc), further methods for
+phase I/II designs, and perhaps also methods for dual agents.
 
 I want to investigate adding some further stopping functions like those
 researched by Zohar and Chevret (2001).
@@ -1038,21 +1249,32 @@ different approach to simulation because cohorts no longer apply.
 
 ## Getting help
 
-This package is in its infancy. If you want help using it, please
-contact me.
-
-If you have found a bug, please drop me a line and also log it here:
+This package is still in active development. There are thousands of unit
+tests run each time the package code is updated. However, that certainly
+does not mean that the code is bug free. You should always be on the
+defensive. This software is offered with no guarantee at all. If you
+have found a bug, please drop me a line and also log it here:
 
 <https://github.com/brockk/escalation/issues>
+
+If you want help using the package, feel free to contact me by email.
 
 ## References
 
 <div id="refs" class="references">
 
+<div id="ref-trialr">
+
+Brock, Kristian. 2020. *Trialr: Clinical Trial Designs in ’Rstan’*.
+<https://cran.r-project.org/package=trialr>.
+
+</div>
+
 <div id="ref-Brock2019">
 
 Brock, Kristian. 2019. “trialr: Bayesian Clinical Trial Designs in R and
 Stan.” *arXiv E-Prints*, June, arXiv:1907.00161.
+<https://arxiv.org/abs/1907.00161>.
 
 </div>
 
@@ -1069,6 +1291,23 @@ Methodology* 17 (1): 112. <https://doi.org/10.1186/s12874-017-0381-x>.
 
 Cheung, Ken. 2013. *Dfcrm: Dose-Finding by the Continual Reassessment
 Method*. <https://CRAN.R-project.org/package=dfcrm>.
+
+</div>
+
+<div id="ref-Ji2007">
+
+Ji, Yuan, Yisheng Li, and B. Nebiyou Bekele. 2007. “Dose-finding in
+phase I clinical trials based on toxicity probability intervals.”
+*Clinical Trials* 4 (3): 235–44.
+<https://doi.org/10.1177/1740774507079442>.
+
+</div>
+
+<div id="ref-Ji2010">
+
+Ji, Yuan, Ping Liu, Yisheng Li, and B. Nebiyou Bekele. 2010. “A modified
+toxicity probability interval method for dose-finding trials.” *Clinical
+Trials* 7 (6): 653–63. <https://doi.org/10.1177/1740774510382799>.
 
 </div>
 
@@ -1105,6 +1344,15 @@ Mozgunov, Pavel, and Thomas Jaki. 2020. “Improving Safety of the
 Continual Reassessment Method via a Modified Allocation Rule.”
 *Statistics in Medicine* 39 (7): 906–22.
 <https://doi.org/10.1002/sim.8450>.
+
+</div>
+
+<div id="ref-Neuenschwander2008">
+
+Neuenschwander, Beat, Michael Branson, and Thomas Gsponer. 2008.
+“Critical aspects of the Bayesian approach to phase I cancer trials.”
+*Statistics in Medicine* 27: 2420–39.
+<https://doi.org/10.1002/sim.3230>.
 
 </div>
 

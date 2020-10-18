@@ -11,8 +11,8 @@ This is a core class in this package. It encapsulates that an object (e.g. a
 CRM model, a 3+3 model) is able to recommend doses, keep track of how many
 patients have been treated at what doses, what toxicity outcomes have been
 seen, and whether a trial should continue. It offers a consistent interface
-to dose-finding methods from several packages, including \code{dfcrm} and
-\code{BOIN}.  \code{bcrm} and \code{trialr} will be added.
+to many dose-finding methods, including CRM, TPI, mTPI, BOIN, EffTox, 3+3,
+and more.
 
 Once you have a standardised interface, modularisation offers a powerful way
 to adorn dose-finding methods with extra desirable behaviour. \code{selector}
@@ -54,18 +54,36 @@ Every \code{selector} object implements the following functions:
   \item \code{\link{num_tox}}
   \item \code{\link{model_frame}}
   \item \code{\link{num_doses}}
+  \item \code{\link{dose_indices}}
   \item \code{\link{recommended_dose}}
   \item \code{\link{continue}}
   \item \code{\link{n_at_dose}}
   \item \code{\link{n_at_recommended_dose}}
-  \item \code{\link{dose_indices}}
+  \item \code{\link{is_randomising}}
   \item \code{\link{prob_administer}}
   \item \code{\link{tox_at_dose}}
   \item \code{\link{empiric_tox_rate}}
   \item \code{\link{mean_prob_tox}}
   \item \code{\link{median_prob_tox}}
+  \item \code{\link{dose_admissible}}
   \item \code{\link{prob_tox_quantile}}
   \item \code{\link{prob_tox_exceeds}}
+  \item \code{\link{supports_sampling}}
+  \item \code{\link{prob_tox_samples}}
+}
+Some selectors also add:
+\itemize{
+  \item \code{\link{tox_limit}}
+  \item \code{\link{eff_limit}}
+  \item \code{\link{eff}}
+  \item \code{\link{num_eff}}
+  \item \code{\link{eff_at_dose}}
+  \item \code{\link{empiric_eff_rate}}
+  \item \code{\link{mean_prob_eff}}
+  \item \code{\link{median_prob_eff}}
+  \item \code{\link{prob_eff_quantile}}
+  \item \code{\link{prob_eff_exceeds}}
+  \item \code{\link{prob_eff_samples}}
 }
 }
 \examples{
@@ -139,13 +157,17 @@ fit \%>\% recommended_dose()
 fit \%>\% continue()
 fit \%>\% n_at_dose()
 fit \%>\% n_at_recommended_dose()
+fit \%>\% is_randomising()
 fit \%>\% prob_administer()
 fit \%>\% tox_at_dose()
 fit \%>\% empiric_tox_rate()
 fit \%>\% mean_prob_tox()
 fit \%>\% median_prob_tox()
+fit \%>\% dose_admissible()
 fit \%>\% prob_tox_quantile(0.9)
 fit \%>\% prob_tox_exceeds(0.5)
+fit \%>\% supports_sampling()
+fit \%>\% prob_tox_samples()
 }
 \seealso{
 \code{\link{selector_factory}}

@@ -6,8 +6,8 @@
 #' CRM model, a 3+3 model) is able to recommend doses, keep track of how many
 #' patients have been treated at what doses, what toxicity outcomes have been
 #' seen, and whether a trial should continue. It offers a consistent interface
-#' to dose-finding methods from several packages, including \code{dfcrm} and
-#' \code{BOIN}.  \code{bcrm} and \code{trialr} will be added.
+#' to many dose-finding methods, including CRM, TPI, mTPI, BOIN, EffTox, 3+3,
+#' and more.
 #'
 #' Once you have a standardised interface, modularisation offers a powerful way
 #' to adorn dose-finding methods with extra desirable behaviour. \code{selector}
@@ -48,19 +48,38 @@
 #'   \item \code{\link{num_tox}}
 #'   \item \code{\link{model_frame}}
 #'   \item \code{\link{num_doses}}
+#'   \item \code{\link{dose_indices}}
 #'   \item \code{\link{recommended_dose}}
 #'   \item \code{\link{continue}}
 #'   \item \code{\link{n_at_dose}}
 #'   \item \code{\link{n_at_recommended_dose}}
-#'   \item \code{\link{dose_indices}}
+#'   \item \code{\link{is_randomising}}
 #'   \item \code{\link{prob_administer}}
 #'   \item \code{\link{tox_at_dose}}
 #'   \item \code{\link{empiric_tox_rate}}
 #'   \item \code{\link{mean_prob_tox}}
 #'   \item \code{\link{median_prob_tox}}
+#'   \item \code{\link{dose_admissible}}
 #'   \item \code{\link{prob_tox_quantile}}
 #'   \item \code{\link{prob_tox_exceeds}}
+#'   \item \code{\link{supports_sampling}}
+#'   \item \code{\link{prob_tox_samples}}
 #' }
+#' Some selectors also add:
+#' \itemize{
+#'   \item \code{\link{tox_limit}}
+#'   \item \code{\link{eff_limit}}
+#'   \item \code{\link{eff}}
+#'   \item \code{\link{num_eff}}
+#'   \item \code{\link{eff_at_dose}}
+#'   \item \code{\link{empiric_eff_rate}}
+#'   \item \code{\link{mean_prob_eff}}
+#'   \item \code{\link{median_prob_eff}}
+#'   \item \code{\link{prob_eff_quantile}}
+#'   \item \code{\link{prob_eff_exceeds}}
+#'   \item \code{\link{prob_eff_samples}}
+#' }
+#'
 #'
 #' @seealso \code{\link{selector_factory}}
 #'
@@ -137,13 +156,17 @@
 #' fit %>% continue()
 #' fit %>% n_at_dose()
 #' fit %>% n_at_recommended_dose()
+#' fit %>% is_randomising()
 #' fit %>% prob_administer()
 #' fit %>% tox_at_dose()
 #' fit %>% empiric_tox_rate()
 #' fit %>% mean_prob_tox()
 #' fit %>% median_prob_tox()
+#' fit %>% dose_admissible()
 #' fit %>% prob_tox_quantile(0.9)
 #' fit %>% prob_tox_exceeds(0.5)
+#' fit %>% supports_sampling()
+#' fit %>% prob_tox_samples()
 selector <- function() {
   # This function exists only to document the abstract class "selector".
 }
@@ -215,6 +238,12 @@ n_at_recommended_dose.selector <- function(x, ...) {
 }
 
 #' @export
+is_randomising.selector <- function(x, ...) {
+  # By default, dose selectors are deterministic:
+  return(FALSE)
+}
+
+#' @export
 prob_administer.selector <- function(x, ...) {
   n_doses <- num_doses(x)
   n_d <- n_at_dose(x)
@@ -222,23 +251,45 @@ prob_administer.selector <- function(x, ...) {
   n_d / sum(n_d)
 }
 
+#' @importFrom purrr map_int
+#' @export
+tox_at_dose.selector <- function(x, ...) {
+  dose_indices <- 1:(num_doses(x))
+  tox_seen <- tox(x)
+  d <- doses_given(x)
+  map_int(dose_indices, ~ sum(tox_seen[d == .x]))
+}
+
+
 #' @export
 empiric_tox_rate.selector <- function(x, ...) {
   return(x %>% tox_at_dose() / x %>% n_at_dose())
 }
 
 #' @export
+dose_admissible.selector <- function(x, ...) {
+  return(rep(TRUE, num_doses(x)))
+}
+
+#' @export
+#' @importFrom tibble as_tibble
 summary.selector <- function(object, ...) {
-  {dose <- n <- tox <- empiric_tox_rate <- mean_prob_tox <-
-    median_prob_tox <- NULL}
-  tibble(
-    dose = dose_indices(object),
-    tox = tox_at_dose(object),
-    n = n_at_dose(object),
-    empiric_tox_rate = empiric_tox_rate(object),
-    mean_prob_tox = mean_prob_tox(object),
-    median_prob_tox = median_prob_tox(object)
-  )
+  as_tibble(object)
+  # {dose <- n <- tox <- empiric_tox_rate <- mean_prob_tox <-
+  #   median_prob_tox <- prob_rand = NULL}
+  # tb <- tibble(
+  #   dose = dose_indices(object),
+  #   tox = tox_at_dose(object),
+  #   n = n_at_dose(object),
+  #   empiric_tox_rate = empiric_tox_rate(object),
+  #   mean_prob_tox = mean_prob_tox(object),
+  #   median_prob_tox = median_prob_tox(object),
+  #   admissible = dose_admissible(object)
+  # )
+  # if(is_randomising(object)) {
+  #   tb$prob_rand = prob_administer(object)
+  # }
+  # tb
 }
 
 #' @importFrom stringr str_to_title
@@ -301,8 +352,8 @@ print.selector <- function(x, ...) {
   # cat(paste0('Model entropy: ', format(round(x$entropy, 2), nsmall = 2)))
 }
 
-#' @importFrom tibble as_tibble
 #' @export
+#' @importFrom tibble as_tibble
 as_tibble.selector <- function(x, ...) {
 
   dose_labs <- c('NoDose', as.character(dose_indices(x)))
@@ -313,13 +364,18 @@ as_tibble.selector <- function(x, ...) {
     rec_bool <- c(FALSE, dose_indices(x) == rec_d)
   }
 
-  tibble(
+  tb <- tibble(
     dose = ordered(dose_labs, levels = dose_labs),
     tox = c(0, tox_at_dose(x)),
     n = c(0, n_at_dose(x)),
     empiric_tox_rate = c(0, empiric_tox_rate(x)),
     mean_prob_tox = c(0, mean_prob_tox(x)),
     median_prob_tox = c(0, median_prob_tox(x)),
+    admissible = c(TRUE, dose_admissible(x)),
     recommended = rec_bool
   )
+  if(is_randomising(x)) {
+    tb$prob_rand = c(0, prob_administer(x))
+  }
+  tb
 }

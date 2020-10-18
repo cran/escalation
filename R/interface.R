@@ -50,6 +50,8 @@ dose_paths_function <- function(selector_factory) {
   UseMethod('dose_paths_function')
 }
 
+
+
 # selector interface ----
 
 #' Target toxicity rate
@@ -71,6 +73,70 @@ dose_paths_function <- function(selector_factory) {
 #' fit %>% tox_target()
 tox_target <- function(x, ...) {
   UseMethod('tox_target')
+}
+
+#' Toxicity rate limit
+#'
+#' Get the maximum permissible toxicity rate, if supported. NULL if not.
+#'
+#' @param x Object of type \code{\link{selector}}.
+#' @param ... Extra args are passed onwards.
+#'
+#' @return numeric
+#'
+#' @export
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' tox_limit(x)
+tox_limit <- function(x, ...) {
+  UseMethod('tox_limit')
+}
+
+#' Efficacy rate limit
+#'
+#' Get the minimum permissible efficacy rate, if supported. NULL if not.
+#'
+#' @param x Object of type \code{\link{selector}}.
+#' @param ... Extra args are passed onwards.
+#'
+#' @return numeric
+#'
+#' @export
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' eff_limit(x)
+eff_limit <- function(x, ...) {
+  UseMethod('eff_limit')
 }
 
 #' Number of patients evaluated.
@@ -179,6 +245,48 @@ num_tox <- function(x, ...) {
   UseMethod('num_tox')
 }
 
+#' Binary efficacy outcomes.
+#'
+#' Get a vector of the binary efficacy outcomes for evaluated patients.
+#'
+#' @param x Object of type \code{\link{selector}}.
+#' @param ... Extra args are passed onwards.
+#'
+#' @return an integer vector
+#'
+#' @export
+#'
+#' @examples
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' model <- get_random_selector(prob_select = prob_select,
+#'                              supports_efficacy = TRUE)
+#' x <- model %>% fit('1NTN 2EN 5BB')
+#' eff(x)
+eff <- function(x, ...) {
+  UseMethod('eff')
+}
+
+#' Total number of efficacies seen.
+#'
+#' Get the number of efficacies seen in a dose-finding trial.
+#'
+#' @param x Object of type \code{\link{selector}}.
+#' @param ... Extra args are passed onwards.
+#'
+#' @return integer
+#'
+#' @export
+#'
+#' @examples
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' model <- get_random_selector(prob_select = prob_select,
+#'                              supports_efficacy = TRUE)
+#' x <- model %>% fit('1NTN 2EN 5BB')
+#' num_eff(x)
+num_eff <- function(x, ...) {
+  UseMethod('num_eff')
+}
+
 #' Model data-frame.
 #'
 #' Get the model data-frame for a dose-finding analysis, inlcuding columns for
@@ -193,10 +301,18 @@ num_tox <- function(x, ...) {
 #' @export
 #'
 #' @examples
+#' # In a toxicity-only setting:
 #' skeleton <- c(0.05, 0.1, 0.25, 0.4, 0.6)
 #' target <- 0.25
 #' model <- get_dfcrm(skeleton = skeleton, target = target)
 #' fit <- model %>% fit('1NNN 2NTN')
+#' fit %>% model_frame()
+#'
+#' # In an efficacy-toxicity setting
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' model <- get_random_selector(prob_select = prob_select,
+#'                              supports_efficacy = TRUE)
+#' x <- model %>% fit('1NTN 2EN 5BB', supports_efficacy = TRUE)
 #' fit %>% model_frame()
 model_frame <- function(x, ...) {
   UseMethod('model_frame')
@@ -338,6 +454,25 @@ n_at_recommended_dose <- function(x, ...) {
   UseMethod('n_at_recommended_dose')
 }
 
+#' Is this selector currently randomly allocating doses?
+#'
+#' Get the percentage of patients evaluated at each dose under investigation.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return a logical value
+#' @export
+#'
+#' @examples
+#' outcomes <- '1NNN 2NTN'
+#' fit <- get_random_selector(prob_select = c(0.1, 0.6, 0.3)) %>%
+#'   fit(outcomes)
+#' fit %>% is_randomising()
+is_randomising <- function(x, ...) {
+  UseMethod('is_randomising')
+}
+
 #' Percentage of patients treated at each dose.
 #'
 #' Get the percentage of patients evaluated at each dose under investigation.
@@ -451,6 +586,158 @@ median_prob_tox <- function(x, ...) {
   UseMethod('median_prob_tox')
 }
 
+
+#' Number of toxicities seen at each dose.
+#'
+#' Get the number of toxicities seen at each dose under investigation.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return an integer vector
+#' @export
+#'
+#' @examples
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' model <- get_random_selector(prob_select = prob_select,
+#'                              supports_efficacy = TRUE)
+#' x <- model %>% fit('1NTN 2EN 5BB')
+#' eff_at_dose(x)
+eff_at_dose <- function(x, ...) {
+  UseMethod('eff_at_dose')
+}
+
+#' Observed efficacy rate at each dose.
+#'
+#' Get the empirical or observed efficacy rate seen at each dose under
+#' investigation. This is simply the number of efficacies divded by the number
+#' of patients evaluated.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return a numerical vector
+#' @export
+#'
+#' @examples
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' model <- get_random_selector(prob_select = prob_select,
+#'                              supports_efficacy = TRUE)
+#' x <- model %>% fit('1NTN 2EN 5BB')
+#' empiric_tox_rate(x)
+empiric_eff_rate <- function(x, ...) {
+  UseMethod('empiric_eff_rate')
+}
+
+#' Mean efficacy rate at each dose.
+#'
+#' Get the estimated mean efficacy rate at each dose under investigation. This
+#' is a set of modelled statistics. The underlying models estimate efficacy
+#' probabilities in different ways. If no model-based estimate of the mean is
+#' available, this function will return a vector of NAs.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return a numerical vector
+#' @export
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' mean_prob_eff(x)
+mean_prob_eff <- function(x, ...) {
+  UseMethod('mean_prob_eff')
+}
+
+#' Median efficacy rate at each dose.
+#'
+#' Get the estimated median efficacy rate at each dose under investigation. This
+#' is a set of modelled statistics. The underlying models estimate efficacy
+#' probabilities in different ways. If no model-based estimate of the median is
+#' available, this function will return a vector of NAs.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return a numerical vector
+#' @export
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' median_prob_eff(x)
+median_prob_eff <- function(x, ...) {
+  UseMethod('median_prob_eff')
+}
+
+#' Is each dose admissible?
+#'
+#' Get a vector of logical values reflecting whether each dose is admissible.
+#' Admissibility is defined in different ways for different models, and may not
+#' be defined at all in some models. For instance, in the TPI method, doses are
+#' inadmissible when the posterior probability is high that the toxicity rate
+#' exceeds the target value. In contrast, admissibility is not defined in the
+#' general CRM model (but it can be added with auxiliary classes). In this
+#' latter case, doses are implicitly considered to be admissible, by default.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param ... arguments passed to other methods
+#'
+#' @return a logical vector
+#' @export
+#'
+#' @examples
+#' outcomes <- '1NNN 2TTT'
+#'
+#' # TPI example. This method defines admissibility.
+#' fit1 <- get_tpi(num_doses = 5, target = 0.3, k1 = 1, k2 = 1.5,
+#'                 exclusion_certainty = 0.95) %>%
+#'   fit(outcomes)
+#' fit1 %>% dose_admissible()
+#'
+#' # Ordinary CRM example with no admissibility function.
+#' skeleton <- c(0.05, 0.1, 0.25, 0.4, 0.6)
+#' target <- 0.25
+#' fit2 <- get_dfcrm(skeleton = skeleton, target = target) %>%
+#'   fit(outcomes)
+#' fit2 %>% dose_admissible()
+#'
+#' # Same CRM example with added admissibility function
+#' fit3 <- get_dfcrm(skeleton = skeleton, target = target) %>%
+#'   stop_when_too_toxic(dose = 1, tox_threshold = target, confidence = 0.8) %>%
+#'   fit(outcomes)
+#' fit3 %>% dose_admissible()
+dose_admissible <- function(x, ...) {
+  UseMethod('dose_admissible')
+}
+
 #' Quantile of the toxicity rate at each dose.
 #'
 #' Get the estimated quantile of the toxicity rate at each dose under
@@ -502,6 +789,78 @@ prob_tox_quantile <- function(x, p, ...) {
 #' fit %>% prob_tox_exceeds(threshold = target + 0.1)
 prob_tox_exceeds <- function(x, threshold, ...) {
   UseMethod('prob_tox_exceeds')
+}
+
+#' Quantile of the efficacy rate at each dose.
+#'
+#' Get the estimated quantile of the efficacy rate at each dose under
+#' investigation. This is a set of modelled statistics. The underlying models
+#' estimate efficacy probabilities in different ways. If no model-based
+#' estimate of the median is available, this function will return a vector of
+#' NAs.
+#'
+#' @param x Object of class \code{\link{selector}}
+#' @param p quantile probability, decimal value between 0 and 1
+#' @param ... arguments passed to other methods
+#'
+#' @return a numerical vector
+#' @export
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' prob_tox_quantile(x, p = 0.9)
+prob_eff_quantile <- function(x, p, ...) {
+  UseMethod('prob_eff_quantile')
+}
+
+#' Probability that the efficacy rate exceeds some threshold.
+#'
+#' Get the probability that the efficacy rate at each dose exceeds some
+#' threshold.
+#'
+#' @param x Object of type \code{\link{selector}}
+#' @param threshold  Probability that efficacy rate exceeds what?
+#' @param ... arguments passed to other methods
+#'
+#' @return numerical vector of probabilities
+#'
+#' @export
+#'
+#' @rdname prob_tox_exceeds
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' prob_tox_exceeds(x, threshold = 0.45)
+prob_eff_exceeds <- function(x, threshold, ...) {
+  UseMethod('prob_eff_exceeds')
 }
 
 #' Does this selector support sampling of outcomes?
@@ -562,6 +921,103 @@ supports_sampling <- function(x, ...) {
 #' fit %>% prob_tox_samples(tall = TRUE)
 prob_tox_samples <- function(x, tall = FALSE, ...) {
   UseMethod('prob_tox_samples')
+}
+
+#' Get samples of the probability of efficacy
+#'
+#' Get samples of the probability of efficacy For instance, a Bayesian approach
+#' that supports sampling would be expected to return posterior samples of the
+#' probability of toxicity. If this class does not support sampling, this
+#' function will raise an error. You can check whether this class supports
+#' sampling by calling \code{\link{supports_sampling}}.
+#'
+#' @param x Object of type \code{\link{selector}}
+#' @param tall logical, if FALSE, a wide data-frame is returned with columns
+#' pertaining to the doses and column names the dose indices.
+#' If TRUE, a tall data-frame is returned with data for all doses stacked
+#' vertically. In this mode, column names will include \code{dose} and
+#' \code{prob_eff}.
+#' @param ... arguments passed to other methods
+#'
+#' @return data-frame like object
+#'
+#' @export
+#'
+#' @rdname prob_tox_samples
+#'
+#' @examples
+#' efftox_priors <- trialr::efftox_priors
+#' p <- efftox_priors(alpha_mean = -7.9593, alpha_sd = 3.5487,
+#'                    beta_mean = 1.5482, beta_sd = 3.5018,
+#'                    gamma_mean = 0.7367, gamma_sd = 2.5423,
+#'                    zeta_mean = 3.4181, zeta_sd = 2.4406,
+#'                    eta_mean = 0, eta_sd = 0.2,
+#'                    psi_mean = 0, psi_sd = 1)
+#' real_doses = c(1.0, 2.0, 4.0, 6.6, 10.0)
+#' model <- get_trialr_efftox(real_doses = real_doses,
+#'                            efficacy_hurdle = 0.5, toxicity_hurdle = 0.3,
+#'                            p_e = 0.1, p_t = 0.1,
+#'                            eff0 = 0.5, tox1 = 0.65,
+#'                            eff_star = 0.7, tox_star = 0.25,
+#'                            priors = p, iter = 1000, chains = 1, seed = 2020)
+#' x <- model %>% fit('1N 2E 3B')
+#' prob_tox_samples(x, tall = TRUE)
+prob_eff_samples <- function(x, tall = FALSE, ...) {
+  UseMethod('prob_eff_samples')
+}
+
+
+
+
+# dose_paths interface ----
+
+#' Calculate dose-path probabilities
+#'
+#' @description
+#' Crystallise a set of \code{\link{dose_paths}} with probabilities to calculate
+#' how likely each path is. Once probabilised in this way, the probabilities of
+#' the terminal nodes in this set of paths will sum to 1. This allows users to
+#' calculate operating characteristics.
+#'
+#' @param dose_paths Object of type \code{\link{dose_paths}}
+#' @param true_prob_tox Numeric vector, true probability of toxicity.
+#' @param true_prob_eff vector of true efficacy probabilities, optionally NULL
+#' if efficacy not analysed.
+#' @param ... Extra parameters
+#'
+#' @seealso \code{\link{dose_paths}}
+#'
+#' @importFrom tibble tibble as_tibble
+#' @importFrom dplyr mutate filter left_join case_when
+#' @importFrom stringr str_count
+#' @importFrom purrr map2 map_dfr
+#' @importFrom stats dbinom
+#' @export
+#'
+#' @examples
+#' # Phase 1 example.
+#' # Calculate dose paths for the first three cohorts in a 3+3 trial of 5 doses:
+#' paths <- get_three_plus_three(num_doses = 5) %>%
+#'   get_dose_paths(cohort_sizes = c(3, 3, 3))
+#'
+#' # Set the true probabilities of toxicity
+#' true_prob_tox <- c(0.12, 0.27, 0.44, 0.53, 0.57)
+#' # And calculate exact operating performance
+#' x <- paths %>% calculate_probabilities(true_prob_tox)
+#' prob_recommend(x)
+#'
+#' # Phase 1/2 example.
+#' prob_select = c(0.1, 0.3, 0.5, 0.07, 0.03)
+#' selector_factory <- get_random_selector(prob_select = prob_select,
+#'                                         supports_efficacy = TRUE)
+#' paths <- selector_factory %>% get_dose_paths(cohort_sizes = c(2, 2))
+#' true_prob_eff <- c(0.27, 0.35, 0.41, 0.44, 0.45)
+#' x <- paths %>% calculate_probabilities(true_prob_tox = true_prob_tox,
+#'                                        true_prob_eff = true_prob_eff)
+#' prob_recommend(x)
+calculate_probabilities <- function(dose_paths, true_prob_tox,
+                                    true_prob_eff = NULL, ...) {
+  UseMethod('calculate_probabilities')
 }
 
 
