@@ -1,10 +1,19 @@
 Package: escalation
 Type: Package
 Title: Modular Approach to Dose Finding Clinical Trials
-Version: 0.1.4
-Date: 2020-10-16
-Authors@R: person("Kristian", "Brock", email = "kristian.brock@gmail.com", 
-         role = c("aut", "cre"), comment = c(ORCID = "0000-0002-3921-0166"))
+Version: 0.1.5
+Date: 2023-05-26
+Authors@R: c(
+    person("Kristian", "Brock", 
+      email = "kristian.brock@gmail.com", 
+      role = c("aut", "cre"), 
+      comment = c(ORCID = "0000-0002-3921-0166")
+    ),
+    person("Daniel", "Slade", 
+      email = "dan@nope.com", 
+      role = c("ctb"), 
+      comment = c(ORCID = "0000-0001-6063-1283")
+    ))
 Maintainer: Kristian Brock <kristian.brock@gmail.com>
 Description: Methods for working with dose-finding clinical trials. We provide 
     implementations of many dose-finding clinical trial designs, including the 
@@ -28,7 +37,6 @@ Description: Methods for working with dose-finding clinical trials. We provide
     patients.
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
 Depends: magrittr
 Imports: dplyr, tidyr (>= 1.0), tidyselect, stringr, purrr, tibble,
         gtools, dfcrm, BOIN, trialr (>= 0.1.5), DiagrammeR,
@@ -37,7 +45,8 @@ RoxygenNote: 7.1.1
 Suggests: testthat, knitr, rmarkdown, ggplot2, covr
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2020-10-18 10:18:37 UTC; k
-Author: Kristian Brock [aut, cre] (<https://orcid.org/0000-0002-3921-0166>)
+Packaged: 2023-05-29 07:56:46 UTC; k
+Author: Kristian Brock [aut, cre] (<https://orcid.org/0000-0002-3921-0166>),
+  Daniel Slade [ctb] (<https://orcid.org/0000-0001-6063-1283>)
 Repository: CRAN
-Date/Publication: 2020-10-18 21:40:06 UTC
+Date/Publication: 2023-05-29 18:10:02 UTC

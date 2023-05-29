@@ -14,19 +14,16 @@
 
 <title>Modified Toxicity Probability Interval Design</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
   }
 });
 </script>
@@ -1248,144 +1245,87 @@ color: #333333;
 </script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-      code.sourceCode > span { display: inline-block; line-height: 1.25; }
-  code.sourceCode > span { color: inherit; text-decoration: inherit; }
-  code.sourceCode > span:empty { height: 1.2em; }
-  .sourceCode { overflow: visible; }
-  code.sourceCode { white-space: pre; position: relative; }
-  div.sourceCode { margin: 1em 0; }
-  pre.sourceCode { margin: 0; }
-  @media screen {
-  div.sourceCode { overflow: auto; }
-  }
-  @media print {
-  code.sourceCode { white-space: pre-wrap; }
-  code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-  }
-  pre.numberSource code
-    { counter-reset: source-line 0; }
-  pre.numberSource code > span
-    { position: relative; left: -4em; counter-increment: source-line; }
-  pre.numberSource code > span > a:first-child::before
-    { content: counter(source-line);
-      position: relative; left: -1em; text-align: right; vertical-align: baseline;
-      border: none; display: inline-block;
-      -webkit-touch-callout: none; -webkit-user-select: none;
-      -khtml-user-select: none; -moz-user-select: none;
-      -ms-user-select: none; user-select: none;
-      padding: 0 4px; width: 4em;
-      color: #aaaaaa;
-    }
-  pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-  div.sourceCode
-    {   }
-  @media screen {
-  code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-  }
-  code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-  code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-  code span.at { color: #7d9029; } /* Attribute */
-  code span.bn { color: #40a070; } /* BaseN */
-  code span.bu { } /* BuiltIn */
-  code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-  code span.ch { color: #4070a0; } /* Char */
-  code span.cn { color: #880000; } /* Constant */
-  code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-  code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-  code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-  code span.dt { color: #902000; } /* DataType */
-  code span.dv { color: #40a070; } /* DecVal */
-  code span.er { color: #ff0000; font-weight: bold; } /* Error */
-  code span.ex { } /* Extension */
-  code span.fl { color: #40a070; } /* Float */
-  code span.fu { color: #06287e; } /* Function */
-  code span.im { } /* Import */
-  code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-  code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-  code span.op { color: #666666; } /* Operator */
-  code span.ot { color: #007020; } /* Other */
-  code span.pp { color: #bc7a00; } /* Preprocessor */
-  code span.sc { color: #4070a0; } /* SpecialChar */
-  code span.ss { color: #bb6688; } /* SpecialString */
-  code span.st { color: #4070a0; } /* String */
-  code span.va { color: #19177c; } /* Variable */
-  code span.vs { color: #4070a0; } /* VerbatimString */
-  code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
-  { counter-reset: source-line 0; }
+{ counter-reset: source-line 0; }
 pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
+{ position: relative; left: -4em; counter-increment: source-line; }
 pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -1410,6 +1350,29 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </script>
 
 
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
 
 <style type="text/css">body {
 background-color: #fff;
@@ -1603,176 +1566,272 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Modified Toxicity Probability Interval Design</h1>
+<h1 class="title toc-ignore">Modified Toxicity Probability Interval
+Design</h1>
 
 
 
-<p>The <code>escalation</code> package by Kristian Brock. Documentation is hosted at <a href="https://brockk.github.io/escalation/" class="uri">https://brockk.github.io/escalation/</a></p>
+<p>The <code>escalation</code> package by Kristian Brock. Documentation
+is hosted at <a href="https://brockk.github.io/escalation/" class="uri">https://brockk.github.io/escalation/</a></p>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>The modified toxicity probability interval (mTPI) design was introduced by <span class="citation">Ji et al. (2010)</span>. As the name suggests, it is a modification of the earlier TPI design, introduced by <span class="citation">Ji, Li, and Bekele (2007)</span>. mTPI is one of a series of dose-finding trial designs that works by partitioning the probability of toxicity into a set of intervals. These designs make dose-selection decisions that are determined by the interval in which the probability of toxicity for the current dose is believed to reside.</p>
-<p>There are a great many similarities and a few subtle differences between the TPI and mTPI designs. For more on the TPI design, refer to the TPI vignette.</p>
+<p>The modified toxicity probability interval (mTPI) design was
+introduced by <span class="citation">Ji et al. (2010)</span>. As the
+name suggests, it is a modification of the earlier TPI design,
+introduced by <span class="citation">Ji, Li, and Bekele (2007)</span>.
+mTPI is one of a series of dose-finding trial designs that works by
+partitioning the probability of toxicity into a set of intervals. These
+designs make dose-selection decisions that are determined by the
+interval in which the probability of toxicity for the current dose is
+believed to reside.</p>
+<p>There are a great many similarities and a few subtle differences
+between the TPI and mTPI designs. For more on the TPI design, refer to
+the TPI vignette.</p>
 </div>
 <div id="summary-of-the-mtpi-design" class="section level1">
 <h1>Summary of the mTPI Design</h1>
-<p>Core to this design is a beta-binomial Bayesian conjugate model. For hyperparameters <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>, let the probability of toxicity at dose <span class="math inline">\(i\)</span> be <span class="math inline">\(p_i\)</span>, with prior distribution</p>
-<p><span class="math display">\[p_i \sim Beta(\alpha, \beta).\]</span></p>
-<p>If <span class="math inline">\(n_i\)</span> patients have been treated at dose <span class="math inline">\(i\)</span>, yielding <span class="math inline">\(x_i\)</span> toxicity events, the posterior distribution is</p>
-<p><span class="math display">\[ p_i | data \sim Beta(\alpha + x_{i}, \beta + n_{i} - x_{i}).\]</span></p>
-<p>The design seeks a dose with probability of toxicity close to some pre-specified target level, <span class="math inline">\(p_T\)</span>. The entire range of possible values for <span class="math inline">\(p_i\)</span> can be broken up into the following intervals:</p>
+<p>Core to this design is a beta-binomial Bayesian conjugate model. For
+hyperparameters <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>, let the probability of toxicity at
+dose <span class="math inline">\(i\)</span> be <span class="math inline">\(p_i\)</span>, with prior distribution</p>
+<p><span class="math display">\[p_i \sim Beta(\alpha,
+\beta).\]</span></p>
+<p>If <span class="math inline">\(n_i\)</span> patients have been
+treated at dose <span class="math inline">\(i\)</span>, yielding <span class="math inline">\(x_i\)</span> toxicity events, the posterior
+distribution is</p>
+<p><span class="math display">\[ p_i | data \sim Beta(\alpha + x_{i},
+\beta + n_{i} - x_{i}).\]</span></p>
+<p>The design seeks a dose with probability of toxicity close to some
+pre-specified target level, <span class="math inline">\(p_T\)</span>.
+The entire range of possible values for <span class="math inline">\(p_i\)</span> can be broken up into the following
+intervals:</p>
 <ul>
 <li>The underdosing interval (UI), defined as <span class="math inline">\((0, p_{T} - \epsilon_{1})\)</span>;</li>
-<li>The equivalence interval (EI), defined as <span class="math inline">\((p_{T} - \epsilon_{1}, p_{T} + \epsilon_{2})\)</span>;</li>
+<li>The equivalence interval (EI), defined as <span class="math inline">\((p_{T} - \epsilon_{1}, p_{T} +
+\epsilon_{2})\)</span>;</li>
 <li>The overdosing interval (OI), defined as <span class="math inline">\((p_{T} + \epsilon_{2}, 1)\)</span>;</li>
 </ul>
-<p>for pre-specified model constants, <span class="math inline">\(\epsilon_{1}, \epsilon_{2}\)</span>. These intervals are mutally-exclusive and mutually-exhaustive, meaning that every possible probability belongs to precisely one of them. In other words, these intervals form a partition of the probability space, <span class="math inline">\((0, 1)\)</span>.</p>
-<p>For a continuous random variable <span class="math inline">\(X\)</span> with cumulative probability mass function <span class="math inline">\(F(x)\)</span> (i.e. <span class="math inline">\(Pr(X &lt; x) = F(x)\)</span>), the authors define the unit probability mass (UPM) for an interval <span class="math inline">\((a, b)\)</span> to be <span class="math inline">\((F(b) - F(a)) / (b - a)\)</span>. That is, the UPM is the probability mass in an interval divided by the width of the interval, and can be interpreted as the average probability density of the interval.</p>
-<p>Then, using the posterior distribution identified above, we calculate the three UPMs</p>
-<p><span class="math display">\[UPM_{UI} = Pr(p_i \in \text{UI}) / (p_{T} - \epsilon_{1}),\]</span> <span class="math display">\[UPM_{EI} = Pr(p_i \in \text{EI}) / (\epsilon_{1} + \epsilon_{2}),\]</span></p>
+<p>for pre-specified model constants, <span class="math inline">\(\epsilon_{1}, \epsilon_{2}\)</span>. These
+intervals are mutally-exclusive and mutually-exhaustive, meaning that
+every possible probability belongs to precisely one of them. In other
+words, these intervals form a partition of the probability space, <span class="math inline">\((0, 1)\)</span>.</p>
+<p>For a continuous random variable <span class="math inline">\(X\)</span> with cumulative probability mass
+function <span class="math inline">\(F(x)\)</span> (i.e. <span class="math inline">\(Pr(X &lt; x) = F(x)\)</span>), the authors define
+the unit probability mass (UPM) for an interval <span class="math inline">\((a, b)\)</span> to be <span class="math inline">\((F(b) - F(a)) / (b - a)\)</span>. That is, the UPM
+is the probability mass in an interval divided by the width of the
+interval, and can be interpreted as the average probability density of
+the interval.</p>
+<p>Then, using the posterior distribution identified above, we calculate
+the three UPMs</p>
+<p><span class="math display">\[UPM_{UI} = Pr(p_i \in \text{UI}) /
+(p_{T} - \epsilon_{1}),\]</span> <span class="math display">\[UPM_{EI} =
+Pr(p_i \in \text{EI}) / (\epsilon_{1} + \epsilon_{2}),\]</span></p>
 <p>and</p>
-<p><span class="math display">\[UPM_{OI} = Pr(p_i \in \text{OI}) / (1 - p_{T} + \epsilon_{2}).\]</span> The logical action in the dose-finding trial depends on which of these three quantities is the greatest. If <span class="math inline">\(UPM_{UI} &gt; UPM_{EI}, UPM_{OI}\)</span>, then the current dose is likely an underdose, so our desire should be to escalate dose to <span class="math inline">\(i+1\)</span>. In contrast, if <span class="math inline">\(UPM_{OI} &gt; UPM_{UI}, UPM_{EI}\)</span>, then the current dose is likely an overdose and we will want to de-escalate dose to <span class="math inline">\(i-1\)</span> for the next patient. If <span class="math inline">\(UPM_{EI} &gt; UPM_{UI}, UPM_{OI}\)</span>, then the current dose is deemed sufficiently close to <span class="math inline">\(p_T\)</span> and we will want to stay at dose-level <span class="math inline">\(i\)</span>.</p>
-<p>Further to these rules regarding dose-selection, the following rule is used to avoid recommending dangerous doses. A dose is deemed inadmissible for being excessively toxic if</p>
-<p><span class="math display">\[ Pr(p_{i} &gt; p_{T} | data) &gt; \xi,\]</span></p>
-<p>for a certainty threshold, <span class="math inline">\(\xi\)</span>. If a dose is excluded by this rule, it should not be recommended by the model. Irrespective the values of <span class="math inline">\(UPM_{UI}, UPM_{EI}\)</span> and <span class="math inline">\(UPM_{OI}\)</span>, the design will recommend to stay at dose <span class="math inline">\(i\)</span> rather than escalate to a dose previously identified as being inadmissible. Furthermore, the design will advocate stopping if the lowest dose is inferred to be inadmissible.</p>
-<p>In their paper, the authors demonstrate acceptable operating performance using <span class="math inline">\(\alpha = \beta = 1\)</span>, <span class="math inline">\(\epsilon_{1} = 0.05\)</span>, <span class="math inline">\(\epsilon_{2} = 0.05\)</span> and <span class="math inline">\(\xi = 0.95\)</span>. See <span class="citation">Ji et al. (2010)</span> and <span class="citation">Ji and Yang (2017)</span> for full details.</p>
+<p><span class="math display">\[UPM_{OI} = Pr(p_i \in \text{OI}) / (1 -
+p_{T} + \epsilon_{2}).\]</span> The logical action in the dose-finding
+trial depends on which of these three quantities is the greatest. If
+<span class="math inline">\(UPM_{UI} &gt; UPM_{EI}, UPM_{OI}\)</span>,
+then the current dose is likely an underdose, so our desire should be to
+escalate dose to <span class="math inline">\(i+1\)</span>. In contrast,
+if <span class="math inline">\(UPM_{OI} &gt; UPM_{UI},
+UPM_{EI}\)</span>, then the current dose is likely an overdose and we
+will want to de-escalate dose to <span class="math inline">\(i-1\)</span> for the next patient. If <span class="math inline">\(UPM_{EI} &gt; UPM_{UI}, UPM_{OI}\)</span>, then
+the current dose is deemed sufficiently close to <span class="math inline">\(p_T\)</span> and we will want to stay at
+dose-level <span class="math inline">\(i\)</span>.</p>
+<p>Further to these rules regarding dose-selection, the following rule
+is used to avoid recommending dangerous doses. A dose is deemed
+inadmissible for being excessively toxic if</p>
+<p><span class="math display">\[ Pr(p_{i} &gt; p_{T} | data) &gt;
+\xi,\]</span></p>
+<p>for a certainty threshold, <span class="math inline">\(\xi\)</span>.
+If a dose is excluded by this rule, it should not be recommended by the
+model. Irrespective the values of <span class="math inline">\(UPM_{UI},
+UPM_{EI}\)</span> and <span class="math inline">\(UPM_{OI}\)</span>, the
+design will recommend to stay at dose <span class="math inline">\(i\)</span> rather than escalate to a dose
+previously identified as being inadmissible. Furthermore, the design
+will advocate stopping if the lowest dose is inferred to be
+inadmissible.</p>
+<p>In their paper, the authors demonstrate acceptable operating
+performance using <span class="math inline">\(\alpha = \beta =
+1\)</span>, <span class="math inline">\(\epsilon_{1} = 0.05\)</span>,
+<span class="math inline">\(\epsilon_{2} = 0.05\)</span> and <span class="math inline">\(\xi = 0.95\)</span>. See <span class="citation">Ji
+et al. (2010)</span> and <span class="citation">Ji and Yang
+(2017)</span> for full details.</p>
 </div>
 <div id="implementation-in-escalation" class="section level1">
 <h1>Implementation in <code>escalation</code></h1>
-<p>To demonstrate the method, let us fit the design to a cohort of three patients treated at the first of five doses, one of whom experienced toxicity. For illustration, use the parameters chosen in <span class="citation">Ji et al. (2010)</span>:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(escalation)</span>
-<span id="cb1-2"><a href="#cb1-2"></a></span>
-<span id="cb1-3"><a href="#cb1-3"></a>model &lt;-<span class="st"> </span><span class="kw">get_mtpi</span>(<span class="dt">num_doses =</span> <span class="dv">5</span>, <span class="dt">target =</span> <span class="fl">0.3</span>, <span class="dt">alpha =</span> <span class="dv">1</span>, <span class="dt">beta =</span> <span class="dv">1</span>, </span>
-<span id="cb1-4"><a href="#cb1-4"></a>                  <span class="dt">epsilon1 =</span> <span class="fl">0.05</span>, <span class="dt">epsilon2 =</span> <span class="fl">0.05</span>, <span class="dt">exclusion_certainty =</span> <span class="fl">0.95</span>)</span>
-<span id="cb1-5"><a href="#cb1-5"></a></span>
-<span id="cb1-6"><a href="#cb1-6"></a>fit &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fit</span>(<span class="st">&#39;1NNT&#39;</span>) </span></code></pre></div>
+<p>To demonstrate the method, let us fit the design to a cohort of three
+patients treated at the first of five doses, one of whom experienced
+toxicity. For illustration, use the parameters chosen in <span class="citation">Ji et al. (2010)</span>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(escalation)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_mtpi</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>, <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">beta =</span> <span class="dv">1</span>, </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">epsilon1 =</span> <span class="fl">0.05</span>, <span class="at">epsilon2 =</span> <span class="fl">0.05</span>, <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT&#39;</span>) </span></code></pre></div>
 <p>The dose recommended for the next cohort is</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">recommended_dose</span>()</span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
-<p>Unsurprisingly, the design does not advocate escalation. Importantly, the modest toxicity seen so far is not enough to render dose 1 inadmissible:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">dose_admissible</span>()</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
-<p>Let us imagine that we treat another two cohorts at dose 1, and see no toxicity:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>fit &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fit</span>(<span class="st">&#39;1NNT 1NNN&#39;</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<p>Unsurprisingly, the design does not advocate escalation. Importantly,
+the modest toxicity seen so far is not enough to render dose 1
+inadmissible:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
+<p>Let us imagine that we treat another two cohorts at dose 1, and see
+no toxicity:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN&#39;</span>) </span></code></pre></div>
 <p>Now, the design is happy to escalate:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>fit</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt; Patient-level data:</span></span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt; # A tibble: 6 x 4</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt;   Patient Cohort  Dose   Tox</span></span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt; 1       1      1     1     0</span></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; 2       2      1     1     0</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; 3       3      1     1     1</span></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; 4       4      2     1     0</span></span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; 5       5      2     1     0</span></span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 6       6      2     1     0</span></span>
-<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt; </span></span>
-<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; Dose-level data:</span></span>
-<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt; # A tibble: 6 x 8</span></span>
-<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt;   dose    tox     n empiric_tox_rate mean_prob_tox median_prob_tox admissible</span></span>
-<span id="cb5-16"><a href="#cb5-16"></a><span class="co">#&gt;   &lt;ord&gt; &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;lgl&gt;     </span></span>
-<span id="cb5-17"><a href="#cb5-17"></a><span class="co">#&gt; 1 NoDo…     0     0            0              0               0    TRUE      </span></span>
-<span id="cb5-18"><a href="#cb5-18"></a><span class="co">#&gt; 2 1         1     6            0.167          0.25            0.23 TRUE      </span></span>
-<span id="cb5-19"><a href="#cb5-19"></a><span class="co">#&gt; 3 2         0     0          NaN              0.5            NA    TRUE      </span></span>
-<span id="cb5-20"><a href="#cb5-20"></a><span class="co">#&gt; 4 3         0     0          NaN              0.5            NA    TRUE      </span></span>
-<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt; 5 4         0     0          NaN              0.5            NA    TRUE      </span></span>
-<span id="cb5-22"><a href="#cb5-22"></a><span class="co">#&gt; 6 5         0     0          NaN              0.5            NA    TRUE      </span></span>
-<span id="cb5-23"><a href="#cb5-23"></a><span class="co">#&gt; # … with 1 more variable: recommended &lt;lgl&gt;</span></span>
-<span id="cb5-24"><a href="#cb5-24"></a><span class="co">#&gt; </span></span>
-<span id="cb5-25"><a href="#cb5-25"></a><span class="co">#&gt; The model targets a toxicity level of 0.3.</span></span>
-<span id="cb5-26"><a href="#cb5-26"></a><span class="co">#&gt; The model advocates continuing at dose 2.</span></span></code></pre></div>
-<p>Let us imagine, however, that dose 2 is surprisingly toxic, yielding three toxicities:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>fit &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN 2TTT&#39;</span>) </span></code></pre></div>
-<p>Despite the low sample size, the statistical model believes that dose 2 is excessively toxic:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">prob_tox_exceeds</span>(<span class="dt">threshold =</span> <span class="fl">0.25</span>)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; [1] 0.2440252 0.9960938        NA        NA        NA</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fit</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Patient-level data:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 4</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Patient Cohort  Dose   Tox</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1       1      1     1     0</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2       2      1     1     0</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3       3      1     1     1</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4       4      2     1     0</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5       5      2     1     0</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6       6      2     1     0</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Dose-level data:</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dose     tox     n empiric_tox_rate mean_prob_tox median_pro…¹ admis…² recom…³</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;        &lt;dbl&gt; &lt;lgl&gt;   &lt;lgl&gt;  </span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NoDose     0     0            0              0            0    TRUE    FALSE  </span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 1          1     6            0.167          0.25         0.23 TRUE    FALSE  </span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 2          0     0          NaN              0.5         NA    TRUE    TRUE   </span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 3          0     0          NaN              0.5         NA    TRUE    FALSE  </span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 4          0     0          NaN              0.5         NA    TRUE    FALSE  </span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 5          0     0          NaN              0.5         NA    TRUE    FALSE  </span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with abbreviated variable names ¹​median_prob_tox, ²​admissible, ³​recommended</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The model targets a toxicity level of 0.3.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The model advocates continuing at dose 2.</span></span></code></pre></div>
+<p>Let us imagine, however, that dose 2 is surprisingly toxic, yielding
+three toxicities:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN 2TTT&#39;</span>) </span></code></pre></div>
+<p>Despite the low sample size, the statistical model believes that dose
+2 is excessively toxic:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">prob_tox_exceeds</span>(<span class="at">threshold =</span> <span class="fl">0.25</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.2440252 0.9960938        NA        NA        NA</span></span></code></pre></div>
 <p>and thus inadmissible:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">dose_admissible</span>()</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; [1]  TRUE FALSE FALSE FALSE FALSE</span></span></code></pre></div>
-<p>Note that since dose 2 is believed to be inadmissible, the assumption of monotonically increasing toxicity means that the doses higher than dose 2 are excessively toxic too.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1]  TRUE FALSE FALSE FALSE FALSE</span></span></code></pre></div>
+<p>Note that since dose 2 is believed to be inadmissible, the assumption
+of monotonically increasing toxicity means that the doses higher than
+dose 2 are excessively toxic too.</p>
 <div id="dose-paths" class="section level2">
 <h2>Dose paths</h2>
-<p>In Figure 2 of their publication, <span class="citation">Ji et al. (2010)</span> list some model recommendations conditional on hypothesised numbers of toxicities in cohorts of varying size. We can use the <code>get_dose_paths</code> function, for instance, to calculate exhaustive model recommendations after a single cohort of three is evaluated at dose 2:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>paths &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">get_dose_paths</span>(<span class="dt">cohort_sizes =</span> <span class="kw">c</span>(<span class="dv">3</span>), <span class="dt">next_dose =</span> <span class="dv">2</span>)</span>
-<span id="cb9-2"><a href="#cb9-2"></a></span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="kw">library</span>(dplyr)</span>
-<span id="cb9-4"><a href="#cb9-4"></a><span class="kw">as_tibble</span>(paths) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(outcomes, next_dose) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">print</span>(<span class="dt">n =</span> <span class="dv">100</span>)</span>
-<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#&gt; # A tibble: 5 x 2</span></span>
-<span id="cb9-6"><a href="#cb9-6"></a><span class="co">#&gt;   outcomes next_dose</span></span>
-<span id="cb9-7"><a href="#cb9-7"></a><span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt;</span></span>
-<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt; 1 &quot;&quot;               2</span></span>
-<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt; 2 &quot;NNN&quot;            3</span></span>
-<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; 3 &quot;NNT&quot;            2</span></span>
-<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt; 4 &quot;NTT&quot;            1</span></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="co">#&gt; 5 &quot;TTT&quot;            1</span></span></code></pre></div>
-<p>This table confirms the advice following a cohort of three to de-escalate if 2 or 3 toxicities are seen, to escalate if no toxicity is seen, otherwise to remain. Note that the recommendations would actually have been the same if <code>next_dose = 3</code> or <code>next_dose = 4</code>. In this five-dose setting, they would naturally have been slightly different if <code>next_dose = 1</code> or <code>next_dose = 5</code> because we cannot de-escalate below dose 1 or escalate above dose 5.</p>
-<p>We can visualise paths to make sense of a slightly more complex example:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>cohort_sizes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
-<span id="cb10-2"><a href="#cb10-2"></a>paths &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">get_dose_paths</span>(<span class="dt">cohort_sizes =</span> cohort_sizes, <span class="dt">next_dose =</span> <span class="dv">2</span>)</span>
-<span id="cb10-3"><a href="#cb10-3"></a><span class="kw">graph_paths</span>(paths)</span></code></pre></div>
-<div id="htmlwidget-7bcf73edd92de82bd365" style="width:672px;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-7bcf73edd92de82bd365">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"4\", fontcolor = \"#414487FF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"5\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"6\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"7\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"9\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"10\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"12\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"13\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"14\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"17\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"20\" [label = \"Stop\", fontcolor = \"#22A884FF\", fillcolor = \"#440154FF\"] \n  \"21\" [label = \"Stop\", fontcolor = \"#22A884FF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
-<p>For more information on working with dose-paths, refer to the dose-paths vignette.</p>
+<p>In Figure 2 of their publication, <span class="citation">Ji et al.
+(2010)</span> list some model recommendations conditional on
+hypothesised numbers of toxicities in cohorts of varying size. We can
+use the <code>get_dose_paths</code> function, for instance, to calculate
+exhaustive model recommendations after a single cohort of three is
+evaluated at dose 2:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> <span class="fu">c</span>(<span class="dv">3</span>), <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(paths) <span class="sc">%&gt;%</span> <span class="fu">select</span>(outcomes, next_dose) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">100</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 2</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   outcomes next_dose</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 &quot;&quot;               2</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 &quot;NNN&quot;            3</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 &quot;NNT&quot;            2</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 &quot;NTT&quot;            1</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 &quot;TTT&quot;            1</span></span></code></pre></div>
+<p>This table confirms the advice following a cohort of three to
+de-escalate if 2 or 3 toxicities are seen, to escalate if no toxicity is
+seen, otherwise to remain. Note that the recommendations would actually
+have been the same if <code>next_dose = 3</code> or
+<code>next_dose = 4</code>. In this five-dose setting, they would
+naturally have been slightly different if <code>next_dose = 1</code> or
+<code>next_dose = 5</code> because we cannot de-escalate below dose 1 or
+escalate above dose 5.</p>
+<p>We can visualise paths to make sense of a slightly more complex
+example:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> cohort_sizes, <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
+<div id="htmlwidget-e6d70ab1f20a97c11a79" style="width:672px;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e6d70ab1f20a97c11a79">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"4\", fontcolor = \"#414487FF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"5\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"6\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"7\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"9\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"10\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"12\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"13\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"14\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"17\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"20\" [label = \"Stop\", fontcolor = \"#22A884FF\", fillcolor = \"#440154FF\"] \n  \"21\" [label = \"Stop\", fontcolor = \"#22A884FF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<p>For more information on working with dose-paths, refer to the
+dose-paths vignette.</p>
 </div>
 <div id="simulation" class="section level2">
 <h2>Simulation</h2>
-<p><span class="citation">Ji et al. (2010)</span> present simulations in their Table 1, comparing the performance of their mTPI method to other designs. We can use the <code>simulate_trials</code> function to reproduce the operating characteristics.</p>
-<p>Their example concerns a clinical trial of eight doses that targets 25% toxicity. We must respecify the <code>model</code> object to reflect this. They also elect to limit the trial to a sample size of <span class="math inline">\(n=30\)</span>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>model &lt;-<span class="st"> </span><span class="kw">get_mtpi</span>(<span class="dt">num_doses =</span> <span class="dv">8</span>, <span class="dt">target =</span> <span class="fl">0.25</span>, </span>
-<span id="cb11-2"><a href="#cb11-2"></a>                  <span class="dt">epsilon1 =</span> <span class="fl">0.05</span>, <span class="dt">epsilon2 =</span> <span class="fl">0.05</span>, </span>
-<span id="cb11-3"><a href="#cb11-3"></a>                  <span class="dt">exclusion_certainty =</span> <span class="fl">0.95</span>) <span class="op">%&gt;%</span></span>
-<span id="cb11-4"><a href="#cb11-4"></a><span class="st">  </span><span class="kw">stop_at_n</span>(<span class="dt">n =</span> <span class="dv">30</span>)</span></code></pre></div>
+<p><span class="citation">Ji et al. (2010)</span> present simulations in
+their Table 1, comparing the performance of their mTPI method to other
+designs. We can use the <code>simulate_trials</code> function to
+reproduce the operating characteristics.</p>
+<p>Their example concerns a clinical trial of eight doses that targets
+25% toxicity. We must respecify the <code>model</code> object to reflect
+this. They also elect to limit the trial to a sample size of <span class="math inline">\(n=30\)</span>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_mtpi</span>(<span class="at">num_doses =</span> <span class="dv">8</span>, <span class="at">target =</span> <span class="fl">0.25</span>, </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">epsilon1 =</span> <span class="fl">0.05</span>, <span class="at">epsilon2 =</span> <span class="fl">0.05</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">30</span>)</span></code></pre></div>
 <p>For the sake of speed, we will run just fifty iterations:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>num_sims &lt;-<span class="st"> </span><span class="dv">50</span></span></code></pre></div>
-<p>In real life, however, we would naturally run many thousands of iterations. Their scenario 1 assumes true probability of toxicity:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>sc1 &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<p>In real life, however, we would naturally run many thousands of
+iterations. Their scenario 1 assumes true probability of toxicity:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>)</span></code></pre></div>
 <p>at which the simulated behaviour is:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="kw">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb14-2"><a href="#cb14-2"></a>sims &lt;-<span class="st"> </span>model <span class="op">%&gt;%</span></span>
-<span id="cb14-3"><a href="#cb14-3"></a><span class="st">  </span><span class="kw">simulate_trials</span>(<span class="dt">num_sims =</span> num_sims, <span class="dt">true_prob_tox =</span> sc1, <span class="dt">next_dose =</span> <span class="dv">1</span>)</span>
-<span id="cb14-4"><a href="#cb14-4"></a></span>
-<span id="cb14-5"><a href="#cb14-5"></a>sims</span>
-<span id="cb14-6"><a href="#cb14-6"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb14-7"><a href="#cb14-7"></a><span class="co">#&gt; </span></span>
-<span id="cb14-8"><a href="#cb14-8"></a><span class="co">#&gt; Number of doses: 8 </span></span>
-<span id="cb14-9"><a href="#cb14-9"></a><span class="co">#&gt; </span></span>
-<span id="cb14-10"><a href="#cb14-10"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb14-11"><a href="#cb14-11"></a><span class="co">#&gt;    1    2    3    4    5    6    7    8 </span></span>
-<span id="cb14-12"><a href="#cb14-12"></a><span class="co">#&gt; 0.05 0.25 0.50 0.60 0.70 0.80 0.90 0.95 </span></span>
-<span id="cb14-13"><a href="#cb14-13"></a><span class="co">#&gt; </span></span>
-<span id="cb14-14"><a href="#cb14-14"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb14-15"><a href="#cb14-15"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6      7      8 </span></span>
-<span id="cb14-16"><a href="#cb14-16"></a><span class="co">#&gt;   0.00   0.14   0.72   0.14   0.00   0.00   0.00   0.00   0.00 </span></span>
-<span id="cb14-17"><a href="#cb14-17"></a><span class="co">#&gt; </span></span>
-<span id="cb14-18"><a href="#cb14-18"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb14-19"><a href="#cb14-19"></a><span class="co">#&gt;     1     2     3     4     5     6     7     8 </span></span>
-<span id="cb14-20"><a href="#cb14-20"></a><span class="co">#&gt; 0.224 0.606 0.162 0.008 0.000 0.000 0.000 0.000 </span></span>
-<span id="cb14-21"><a href="#cb14-21"></a><span class="co">#&gt; </span></span>
-<span id="cb14-22"><a href="#cb14-22"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb14-23"><a href="#cb14-23"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-24"><a href="#cb14-24"></a><span class="co">#&gt;      30      30      30      30      30      30 </span></span>
-<span id="cb14-25"><a href="#cb14-25"></a><span class="co">#&gt; </span></span>
-<span id="cb14-26"><a href="#cb14-26"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb14-27"><a href="#cb14-27"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-28"><a href="#cb14-28"></a><span class="co">#&gt;    4.00    6.00    7.00    7.48    9.00   11.00 </span></span>
-<span id="cb14-29"><a href="#cb14-29"></a><span class="co">#&gt; </span></span>
-<span id="cb14-30"><a href="#cb14-30"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb14-31"><a href="#cb14-31"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-32"><a href="#cb14-32"></a><span class="co">#&gt;   15.30   27.50   30.75   30.65   34.90   42.30</span></span></code></pre></div>
-<p>This reproduces their finding that dose 2 is overwhelmingly likely to be recommended, and that the sample size is virtually guaranteed to be 30, i.e. early stopping is unlikely.</p>
-<p>For more information on running dose-finding simulations, refer to the simulation vignette.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> sc1, <span class="at">next_dose =</span> <span class="dv">1</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>sims</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 8 </span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5    6    7    8 </span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.05 0.25 0.50 0.60 0.70 0.80 0.90 0.95 </span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6      7      8 </span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.00   0.14   0.72   0.14   0.00   0.00   0.00   0.00   0.00 </span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6     7     8 </span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.224 0.606 0.162 0.008 0.000 0.000 0.000 0.000 </span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      30      30      30      30      30      30 </span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    4.00    6.00    7.00    7.48    9.00   11.00 </span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   15.30   27.50   30.75   30.65   34.90   42.30</span></span></code></pre></div>
+<p>This reproduces their finding that dose 2 is overwhelmingly likely to
+be recommended, and that the sample size is virtually guaranteed to be
+30, i.e. early stopping is unlikely.</p>
+<p>For more information on running dose-finding simulations, refer to
+the simulation vignette.</p>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
-<h1>References</h1>
-<div id="refs" class="references">
-<div id="ref-Ji2007">
-<p>Ji, Yuan, Yisheng Li, and B. Nebiyou Bekele. 2007. “Dose-finding in phase I clinical trials based on toxicity probability intervals.” <em>Clinical Trials</em> 4 (3): 235–44. <a href="https://doi.org/10.1177/1740774507079442">https://doi.org/10.1177/1740774507079442</a>.</p>
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Ji2007" class="csl-entry">
+Ji, Yuan, Yisheng Li, and B. Nebiyou Bekele. 2007. <span>“<span class="nocase">Dose-finding in phase I clinical trials based on toxicity
+probability intervals</span>.”</span> <em>Clinical Trials</em> 4 (3):
+235–44. <a href="https://doi.org/10.1177/1740774507079442">https://doi.org/10.1177/1740774507079442</a>.
 </div>
-<div id="ref-Ji2010">
-<p>Ji, Yuan, Ping Liu, Yisheng Li, and B. Nebiyou Bekele. 2010. “A modified toxicity probability interval method for dose-finding trials.” <em>Clinical Trials</em> 7 (6): 653–63. <a href="https://doi.org/10.1177/1740774510382799">https://doi.org/10.1177/1740774510382799</a>.</p>
+<div id="ref-Ji2010" class="csl-entry">
+Ji, Yuan, Ping Liu, Yisheng Li, and B. Nebiyou Bekele. 2010.
+<span>“<span class="nocase">A modified toxicity probability interval
+method for dose-finding trials</span>.”</span> <em>Clinical Trials</em>
+7 (6): 653–63. <a href="https://doi.org/10.1177/1740774510382799">https://doi.org/10.1177/1740774510382799</a>.
 </div>
-<div id="ref-Ji2017">
-<p>Ji, Yuan, and Shengjie Yang. 2017. “On the Interval-Based Dose-Finding Designs,” 1–26. <a href="https://arxiv.org/abs/1706.03277">https://arxiv.org/abs/1706.03277</a>.</p>
+<div id="ref-Ji2017" class="csl-entry">
+Ji, Yuan, and Shengjie Yang. 2017. <span>“<span class="nocase">On the
+Interval-Based Dose-Finding Designs</span>,”</span> 1–26. <a href="https://arxiv.org/abs/1706.03277">https://arxiv.org/abs/1706.03277</a>.
 </div>
 </div>
 </div>
