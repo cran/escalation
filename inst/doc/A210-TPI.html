@@ -278,13 +278,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
   function tryEval(code) {
     var result = null;
     try {
-      result = eval(code);
+      result = eval("(" + code + ")");
     } catch(error) {
-      if (!error instanceof SyntaxError) {
+      if (!(error instanceof SyntaxError)) {
         throw error;
       }
       try {
-        result = eval("(" + code + ")");
+        result = eval(code);
       } catch(e) {
         if (e instanceof SyntaxError) {
           throw error;
@@ -316,20 +316,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
       document.body.style.height = "100%";
       document.documentElement.style.width = "100%";
       document.documentElement.style.height = "100%";
-      if (cel) {
-        cel.style.position = "absolute";
-        var pad = unpackPadding(sizing.padding);
-        cel.style.top = pad.top + "px";
-        cel.style.right = pad.right + "px";
-        cel.style.bottom = pad.bottom + "px";
-        cel.style.left = pad.left + "px";
-        el.style.width = "100%";
-        el.style.height = "100%";
-      }
+      cel.style.position = "absolute";
+      var pad = unpackPadding(sizing.padding);
+      cel.style.top = pad.top + "px";
+      cel.style.right = pad.right + "px";
+      cel.style.bottom = pad.bottom + "px";
+      cel.style.left = pad.left + "px";
+      el.style.width = "100%";
+      el.style.height = "100%";
 
       return {
-        getWidth: function() { return cel.offsetWidth; },
-        getHeight: function() { return cel.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
 
     } else {
@@ -337,8 +335,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
       el.style.height = px(sizing.height);
 
       return {
-        getWidth: function() { return el.offsetWidth; },
-        getHeight: function() { return el.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
     }
   }
@@ -562,8 +560,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
           elementData(el, "initialized", true);
           if (bindingDef.initialize) {
-            var result = bindingDef.initialize(el, el.offsetWidth,
-              el.offsetHeight);
+            var rect = el.getBoundingClientRect();
+            var result = bindingDef.initialize(el, rect.width, rect.height);
             elementData(el, "init_result", result);
           }
         }
@@ -605,29 +603,30 @@ document.addEventListener('DOMContentLoaded', function(e) {
       forEach(matches, function(el) {
         var sizeObj = initSizing(el, binding);
 
+        var getSize = function(el) {
+          if (sizeObj) {
+            return {w: sizeObj.getWidth(), h: sizeObj.getHeight()}
+          } else {
+            var rect = el.getBoundingClientRect();
+            return {w: rect.width, h: rect.height}
+          }
+        };
+
         if (hasClass(el, "html-widget-static-bound"))
           return;
         el.className = el.className + " html-widget-static-bound";
 
         var initResult;
         if (binding.initialize) {
-          initResult = binding.initialize(el,
-            sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          );
+          var size = getSize(el);
+          initResult = binding.initialize(el, size.w, size.h);
           elementData(el, "init_result", initResult);
         }
 
         if (binding.resize) {
-          var lastSize = {
-            w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          };
+          var lastSize = getSize(el);
           var resizeHandler = function(e) {
-            var size = {
-              w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-              h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-            };
+            var size = getSize(el);
             if (size.w === 0 && size.h === 0)
               return;
             if (size.w === lastSize.w && size.h === lastSize.h)
@@ -929,7 +928,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     return result;
   }
 })();
-
 </script>
 <script>/*
 Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)
@@ -1200,7 +1198,7 @@ color: #333333;
             // Get node id
             var nodeid = e.currentTarget.id;
             // Get node text object and make an array
-            var node_texts = $("#" + nodeid + " text");
+            var node_texts = $("#" + id + " #" + nodeid + " text");
             //var node_path = $("#" + nodeid + " path")[0];
             var text_array = node_texts.map(function() {return $(this).text(); }).toArray();
             // Build return object *obj* with node-id, node text values and node fill
@@ -1252,6 +1250,7 @@ div.column{display: inline-block; vertical-align: top; width: 50%;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 </style>
+
 
 
 <style type="text/css">
@@ -1334,13 +1333,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -1646,63 +1652,63 @@ performance using <span class="math inline">\(\alpha = \beta =
 <p>To demonstrate the method, let us fit the design to a cohort of three
 patients treated at the first of five doses, one of whom experienced
 toxicity. For illustration, use the parameters chosen in <span class="citation">Ji, Li, and Bekele (2007)</span>:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(escalation)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_tpi</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>, <span class="at">alpha =</span> <span class="fl">0.005</span>, <span class="at">beta =</span> <span class="fl">0.005</span>, </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">k1 =</span> <span class="dv">1</span>, <span class="at">k2 =</span> <span class="fl">1.5</span>, <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT&#39;</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(escalation)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_tpi</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>, <span class="at">alpha =</span> <span class="fl">0.005</span>, <span class="at">beta =</span> <span class="fl">0.005</span>, </span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>                 <span class="at">k1 =</span> <span class="dv">1</span>, <span class="at">k2 =</span> <span class="fl">1.5</span>, <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT&#39;</span>) </span></code></pre></div>
 <p>The dose recommended for the next cohort is</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 <p>Unsurprisingly, the design does not advocate escalation. Importantly,
 the modest toxicity seen so far is not enough to render dose 1
 inadmissible:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
 <p>Let us imagine that we treat another two cohorts at dose 1, and see
 no toxicity:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN&#39;</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN&#39;</span>) </span></code></pre></div>
 <p>Now, the design is happy to escalate:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fit</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Patient-level data:</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 9 × 4</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Patient Cohort  Dose   Tox</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1       1      1     1     0</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2       2      1     1     0</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3       3      1     1     1</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4       4      2     1     0</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5       5      2     1     0</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6       6      2     1     0</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7       7      3     1     0</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8       8      3     1     0</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9       9      3     1     0</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Dose-level data:</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 8</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dose     tox     n empiric_tox_rate mean_prob_tox median_pro…¹ admis…² recom…³</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;        &lt;dbl&gt; &lt;lgl&gt;   &lt;lgl&gt;  </span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NoDose     0     0            0             0             0    TRUE    FALSE  </span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 1          1     9            0.111         0.112         0.08 TRUE    FALSE  </span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 2          0     0          NaN             0.5          NA    TRUE    TRUE   </span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 3          0     0          NaN             0.5          NA    TRUE    FALSE  </span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 4          0     0          NaN             0.5          NA    TRUE    FALSE  </span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 5          0     0          NaN             0.5          NA    TRUE    FALSE  </span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with abbreviated variable names ¹​median_prob_tox, ²​admissible, ³​recommended</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The model targets a toxicity level of 0.3.</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The model advocates continuing at dose 2.</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>fit</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; Patient-level data:</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 9 × 4</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;   Patient Cohort  Dose   Tox</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 1       1      1     1     0</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 2       2      1     1     0</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 3       3      1     1     1</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 4       4      2     1     0</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; 5       5      2     1     0</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 6       6      2     1     0</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 7       7      3     1     0</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; 8       8      3     1     0</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 9       9      3     1     0</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Dose-level data:</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;   dose     tox     n empiric_tox_rate mean_prob_tox median_prob_tox admissible</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;   &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;lgl&gt;     </span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; 1 NoDose     0     0            0             0                0    TRUE      </span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; 2 1          1     9            0.111         0.112            0.08 TRUE      </span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 3 2          0     0          NaN             0.5             NA    TRUE      </span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 4 3          0     0          NaN             0.5             NA    TRUE      </span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 5 4          0     0          NaN             0.5             NA    TRUE      </span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 6 5          0     0          NaN             0.5             NA    TRUE      </span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: recommended &lt;lgl&gt;</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; The model targets a toxicity level of 0.3.</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; The model advocates continuing at dose 2.</span></span></code></pre></div>
 <p>Let us imagine, however, that dose 2 is surprisingly toxic, yielding
 three toxicities:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN 2TTT&#39;</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNT 1NNN 1NNN 2TTT&#39;</span>) </span></code></pre></div>
 <p>Despite the low sample size, the statistical model believes that dose
 2 is excessively toxic:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">prob_tox_exceeds</span>(<span class="at">threshold =</span> <span class="fl">0.25</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.1007690 0.9999679        NA        NA        NA</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">prob_tox_exceeds</span>(<span class="at">threshold =</span> <span class="fl">0.25</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.1007690 0.9999679        NA        NA        NA</span></span></code></pre></div>
 <p>and thus inadmissible:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1]  TRUE FALSE FALSE FALSE FALSE</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; [1]  TRUE FALSE FALSE FALSE FALSE</span></span></code></pre></div>
 <p>Note that since dose 2 is believed to be inadmissible, the assumption
 of monotonically increasing toxicity means that the doses higher than
 dose 2 are excessively toxic too.</p>
@@ -1714,18 +1720,18 @@ hypothesised numbers of toxicities in cohorts of varying size. We can
 use the <code>get_dose_paths</code> function, for instance, to calculate
 exhaustive model recommendations after a single cohort of three is
 evaluated at dose 2:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> <span class="fu">c</span>(<span class="dv">3</span>), <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(paths) <span class="sc">%&gt;%</span> <span class="fu">select</span>(outcomes, next_dose) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">100</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 2</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   outcomes next_dose</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt;</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 &quot;&quot;               2</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 &quot;NNN&quot;            3</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 &quot;NNT&quot;            2</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 &quot;NTT&quot;            1</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 &quot;TTT&quot;            1</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> <span class="fu">c</span>(<span class="dv">3</span>), <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">as_tibble</span>(paths) <span class="sc">%&gt;%</span> <span class="fu">select</span>(outcomes, next_dose) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">100</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 2</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt;   outcomes next_dose</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 1 &quot;&quot;               2</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 2 &quot;NNN&quot;            3</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 3 &quot;NNT&quot;            2</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 4 &quot;NTT&quot;            1</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; 5 &quot;TTT&quot;            1</span></span></code></pre></div>
 <p>This table confirms the advice following a cohort of three to
 de-escalate if 2 or 3 toxicities are seen, to escalate if no toxicity is
 seen, otherwise to remain. Note that the recommendations would actually
@@ -1735,9 +1741,9 @@ naturally have been slightly different if <code>next_dose = 1</code> or
 <code>next_dose = 5</code> because we cannot de-escalate below dose 1 or
 escalate above dose 5.</p>
 <p>We can easily visualise those paths with:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
-<div id="htmlwidget-c86eef331c82d3b72012" style="width:672px;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-c86eef331c82d3b72012">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"4\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"5\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"1\"->\"3\" [label = \"NNT\"] \n\"1\"->\"4\" [label = \"NTT\"] \n\"1\"->\"5\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
+<div class="grViz html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-96c911d6dd3f2ffa163a" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-96c911d6dd3f2ffa163a">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"4\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"5\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"1\"->\"3\" [label = \"NNT\"] \n\"1\"->\"4\" [label = \"NTT\"] \n\"1\"->\"5\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 <p>For more information on working with dose-paths, refer to the
 dose-paths vignette.</p>
 </div>
@@ -1750,47 +1756,47 @@ function to reproduce the operating characteristics.</p>
 <p>Their example concerns a clinical trial of eight doses that targets
 25% toxicity. We must respecify the <code>model</code> object to reflect
 this. They also elect to limit the trial to a sample size of <span class="math inline">\(n=30\)</span>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_tpi</span>(<span class="at">num_doses =</span> <span class="dv">8</span>, <span class="at">target =</span> <span class="fl">0.25</span>, <span class="at">k1 =</span> <span class="dv">1</span>, <span class="at">k2 =</span> <span class="fl">1.5</span>,</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">30</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_tpi</span>(<span class="at">num_doses =</span> <span class="dv">8</span>, <span class="at">target =</span> <span class="fl">0.25</span>, <span class="at">k1 =</span> <span class="dv">1</span>, <span class="at">k2 =</span> <span class="fl">1.5</span>,</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                 <span class="at">exclusion_certainty =</span> <span class="fl">0.95</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">30</span>)</span></code></pre></div>
 <p>For the sake of speed, we will run just fifty iterations:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
 <p>In real life, however, we would naturally run many thousands of
 iterations. Their scenario 1 assumes true probability of toxicity:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>sc1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>)</span></code></pre></div>
 <p>at which the simulated behaviour is:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> sc1, <span class="at">next_dose =</span> <span class="dv">1</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>sims</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 8 </span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5    6    7    8 </span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.05 0.25 0.50 0.60 0.70 0.80 0.90 0.95 </span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6      7      8 </span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.00   0.14   0.76   0.10   0.00   0.00   0.00   0.00   0.00 </span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6     7     8 </span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.226 0.606 0.160 0.008 0.000 0.000 0.000 0.000 </span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      30      30      30      30      30      30 </span></span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    4.00    6.00    7.00    7.44    9.00   11.00 </span></span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   15.30   27.50   30.75   30.65   34.90   42.30</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> sc1, <span class="at">next_dose =</span> <span class="dv">1</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>sims</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Number of doses: 8 </span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5    6    7    8 </span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; 0.05 0.25 0.50 0.60 0.70 0.80 0.90 0.95 </span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6      7      8 </span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt;   0.00   0.10   0.76   0.14   0.00   0.00   0.00   0.00   0.00 </span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6     7     8 </span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt; 0.212 0.628 0.148 0.012 0.000 0.000 0.000 0.000 </span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt;      30      30      30      30      30      30 </span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a><span class="co">#&gt;    4.00    6.00    7.00    7.36    9.00   12.00 </span></span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a><span class="co">#&gt;   20.40   27.82   29.55   30.78   34.88   48.90</span></span></code></pre></div>
 <p>This reproduces their finding that dose 2 is overwhelmingly likely to
 be recommended, and that the sample size is virtually guaranteed to be
 30, i.e. early stopping is unlikely.</p>

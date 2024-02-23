@@ -7,6 +7,16 @@ tox_target.derived_dose_selector <- function(x, ...) {
 }
 
 #' @export
+tox_limit.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% tox_limit(...))
+}
+
+#' @export
+eff_limit.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% eff_limit(...))
+}
+
+#' @export
 num_patients.derived_dose_selector <- function(x, ...) {
   return(x$parent %>% num_patients(...))
 }
@@ -27,6 +37,11 @@ tox.derived_dose_selector <- function(x, ...) {
 }
 
 #' @export
+eff.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% eff(...))
+}
+
+#' @export
 num_doses.derived_dose_selector <- function(x, ...) {
   return(x$parent %>% num_doses(...))
 }
@@ -44,6 +59,12 @@ continue.derived_dose_selector <- function(x, ...) {
 #' @export
 n_at_dose.derived_dose_selector <- function(x, ...) {
   return(x$parent %>% n_at_dose(...))
+}
+
+#' @export
+#' @importFrom tibble tibble
+model_frame.derived_dose_selector <- function(x, ...) {
+  return(x$parent %>% model_frame(...))
 }
 
 #' @export
@@ -129,4 +150,28 @@ prob_tox_samples.derived_dose_selector <- function(x, tall = FALSE, ...) {
 #' @export
 prob_eff_samples.derived_dose_selector <- function(x, tall = FALSE, ...) {
   return(prob_eff_samples(x$parent, tall = tall, ...))
+}
+
+#' @export
+utility.derived_dose_selector <- function(x, ...) {
+  return(utility(x$parent, ...))
+}
+
+
+#' @export
+summary.derived_dose_selector <- function(object, ...) {
+  summary(object$parent, ...)
+}
+
+#' Cast \code{dose_selector} object to \code{\link[tibble]{tibble}}.
+#'
+#' @param x Object of class \code{dose_selector}.
+#' @param ... Extra args passed onwards.
+#'
+#' @return Object of class \code{\link[tibble]{tibble}}
+#'
+#' @importFrom tibble as_tibble
+#' @export
+as_tibble.derived_dose_selector <- function(x, ...) {
+  as_tibble(x$parent, ...)
 }

@@ -278,13 +278,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
   function tryEval(code) {
     var result = null;
     try {
-      result = eval(code);
+      result = eval("(" + code + ")");
     } catch(error) {
-      if (!error instanceof SyntaxError) {
+      if (!(error instanceof SyntaxError)) {
         throw error;
       }
       try {
-        result = eval("(" + code + ")");
+        result = eval(code);
       } catch(e) {
         if (e instanceof SyntaxError) {
           throw error;
@@ -316,20 +316,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
       document.body.style.height = "100%";
       document.documentElement.style.width = "100%";
       document.documentElement.style.height = "100%";
-      if (cel) {
-        cel.style.position = "absolute";
-        var pad = unpackPadding(sizing.padding);
-        cel.style.top = pad.top + "px";
-        cel.style.right = pad.right + "px";
-        cel.style.bottom = pad.bottom + "px";
-        cel.style.left = pad.left + "px";
-        el.style.width = "100%";
-        el.style.height = "100%";
-      }
+      cel.style.position = "absolute";
+      var pad = unpackPadding(sizing.padding);
+      cel.style.top = pad.top + "px";
+      cel.style.right = pad.right + "px";
+      cel.style.bottom = pad.bottom + "px";
+      cel.style.left = pad.left + "px";
+      el.style.width = "100%";
+      el.style.height = "100%";
 
       return {
-        getWidth: function() { return cel.offsetWidth; },
-        getHeight: function() { return cel.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
 
     } else {
@@ -337,8 +335,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
       el.style.height = px(sizing.height);
 
       return {
-        getWidth: function() { return el.offsetWidth; },
-        getHeight: function() { return el.offsetHeight; }
+        getWidth: function() { return cel.getBoundingClientRect().width; },
+        getHeight: function() { return cel.getBoundingClientRect().height; }
       };
     }
   }
@@ -562,8 +560,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
           elementData(el, "initialized", true);
           if (bindingDef.initialize) {
-            var result = bindingDef.initialize(el, el.offsetWidth,
-              el.offsetHeight);
+            var rect = el.getBoundingClientRect();
+            var result = bindingDef.initialize(el, rect.width, rect.height);
             elementData(el, "init_result", result);
           }
         }
@@ -605,29 +603,30 @@ document.addEventListener('DOMContentLoaded', function(e) {
       forEach(matches, function(el) {
         var sizeObj = initSizing(el, binding);
 
+        var getSize = function(el) {
+          if (sizeObj) {
+            return {w: sizeObj.getWidth(), h: sizeObj.getHeight()}
+          } else {
+            var rect = el.getBoundingClientRect();
+            return {w: rect.width, h: rect.height}
+          }
+        };
+
         if (hasClass(el, "html-widget-static-bound"))
           return;
         el.className = el.className + " html-widget-static-bound";
 
         var initResult;
         if (binding.initialize) {
-          initResult = binding.initialize(el,
-            sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          );
+          var size = getSize(el);
+          initResult = binding.initialize(el, size.w, size.h);
           elementData(el, "init_result", initResult);
         }
 
         if (binding.resize) {
-          var lastSize = {
-            w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-            h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-          };
+          var lastSize = getSize(el);
           var resizeHandler = function(e) {
-            var size = {
-              w: sizeObj ? sizeObj.getWidth() : el.offsetWidth,
-              h: sizeObj ? sizeObj.getHeight() : el.offsetHeight
-            };
+            var size = getSize(el);
             if (size.w === 0 && size.h === 0)
               return;
             if (size.w === lastSize.w && size.h === lastSize.h)
@@ -929,7 +928,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     return result;
   }
 })();
-
 </script>
 <script>/*
 Viz.js 1.8.2 (Graphviz 2.40.1, Expat 2.2.5, Emscripten 1.37.33)
@@ -1200,7 +1198,7 @@ color: #333333;
             // Get node id
             var nodeid = e.currentTarget.id;
             // Get node text object and make an array
-            var node_texts = $("#" + nodeid + " text");
+            var node_texts = $("#" + id + " #" + nodeid + " text");
             //var node_path = $("#" + nodeid + " path")[0];
             var text_array = node_texts.map(function() {return $(this).text(); }).toArray();
             // Build return object *obj* with node-id, node text values and node fill
@@ -1252,6 +1250,7 @@ div.column{display: inline-block; vertical-align: top; width: 50%;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 </style>
+
 
 
 <style type="text/css">
@@ -1334,13 +1333,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -1646,31 +1652,31 @@ sequence in a trial of five doses targeting <span class="math inline">\(p_T = 0.
 <p>Opting to take the defaults, <span class="math inline">\(\phi_1 = 0.6
 p_T = 0.18\)</span> and <span class="math inline">\(\phi_2 = 1.4 p_T =
 0.42\)</span>, we create an object to fit the model using:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(escalation)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(escalation)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>)</span></code></pre></div>
 <p>This is short-hand for</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>, <span class="at">p.saf =</span> <span class="fl">0.18</span>, <span class="at">p.tox =</span> <span class="fl">0.42</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>, <span class="at">p.saf =</span> <span class="fl">0.18</span>, <span class="at">p.tox =</span> <span class="fl">0.42</span>)</span></code></pre></div>
 <p>The text in the paper describes that outcomes ‘1NNN’ were observed in
 the first cohort:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN&#39;</span>)</span></code></pre></div>
 <p>leading to advice to escalate:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>The next cohort also saw three non-toxicity events, leading to
 advice:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN 2NNN&#39;</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 3</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN 2NNN&#39;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; [1] 3</span></span></code></pre></div>
 <p>In the third cohort, two patients had toxicity, leading to
 advice:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN 2NNN 3NTT&#39;</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(<span class="st">&#39;1NNN 2NNN 3NTT&#39;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>The relatively low sample size at dose 3 means that the dose has not
 yet been rendered inadmissible:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
 <div id="dose-paths" class="section level2">
 <h2>Dose paths</h2>
 <p>We can reproduce some of the advice above using dose-paths to
@@ -1678,12 +1684,12 @@ exhaustively calculate all possible future model advice. For example,
 after observing <code>1NNN</code> in the first cohort, we can reproduce
 the advice to escalate further after seeing <code>2NNN</code> and then
 de-escalate after seeing <code>3NTT</code> using:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> cohort_sizes, </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NNN&#39;</span>, <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
-<div id="htmlwidget-8162f44a5c5f14f2eb17" style="width:672px;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-8162f44a5c5f14f2eb17">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"4\", fontcolor = \"#414487FF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"5\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"6\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"7\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"9\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"10\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"12\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"14\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"16\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"17\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"20\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"21\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> cohort_sizes, </span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NNN&#39;</span>, <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
+<div class="grViz html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-16716c9af056ce6d334f" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-16716c9af056ce6d334f">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"4\", fontcolor = \"#414487FF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"5\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"6\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"7\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"9\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"10\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"12\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"14\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"16\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"17\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"20\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"21\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 <p>Thus, we can trace the path <code>1NNN 2NNN 3NNT</code>, along with
 every other possible path in two cohorts of three after having observed
 <code>1NNN</code>.</p>
@@ -1698,27 +1704,27 @@ Table 4 some simulated operating characteristics. We can use the
 <p>Their example concerns a clinical trial of six doses that targets 25%
 toxicity. We specify the <code>model</code> object to reflect this. They
 also elect to limit the trial to a sample size of <span class="math inline">\(n=36\)</span>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">6</span>, <span class="at">target =</span> <span class="fl">0.25</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">36</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">6</span>, <span class="at">target =</span> <span class="fl">0.25</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">36</span>)</span></code></pre></div>
 <p>Their scenario 1 investigates the true probability vector:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>)</span></code></pre></div>
 <p>For the sake of speed, we will run just fifty iterations:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
 <p>In real life, however, we would naturally run many thousands of
 iterations.</p>
 <p>Running the simulation:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> </span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> </span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
 <p>we see that from this small sample size, the probability that each
 dose is recommended is similar to that reported:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6 </span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.10   0.66   0.18   0.06   0.00   0.00   0.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6 </span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt;   0.08   0.60   0.30   0.02   0.00   0.00   0.00</span></span></code></pre></div>
 <p>and so is the expected number of patients treated at each dose
 level:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(<span class="fu">n_at_dose</span>(sims))</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6 </span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 23.70  8.64  1.32  0.18  0.00  0.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">colMeans</span>(<span class="fu">n_at_dose</span>(sims))</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6 </span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; 21.48 10.80  1.98  0.12  0.00  0.00</span></span></code></pre></div>
 <p>For more information on running dose-finding simulations, refer to
 the simulation vignette.</p>
 </div>

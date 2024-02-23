@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 Before reading this document on simulating dose-finding trials using the `escalation` package, be sure to check out the [README file](https://brockk.github.io/escalation/).
 It explains how to compose dose-finding designs using the flexible syntax provided in `escalation`.
 
-Once you have composed a design that appeals, you will want to learn about its operating performance by running many simulated trials.
+Once you have composed a design that appeals, you will want to learn about its operating performance by running many simulated trials, and possibly compare it to competing designs.
 That is the focus of this vignette.
 We study simulations because we believe they will predict the performance we can expect in reality.
 By operating performance, we mean:
@@ -39,11 +39,19 @@ By operating performance, we mean:
 * how long trials take;
 * and so on.
 
+We are often interested both in the absolute levels of these quantities, and how they compare to those of competing designs.
+When comparing designs, we have an efficient method called `simulate_compare` that examines the decisions of many design on the same simulated patients to reduce Monte Carlo uncertainty.
 
 # Simulating trials in `escalation`
-Simulations are run using the `simulate_trials` function.
-It can be called on any dose-escalation design.
+Simulations are run using the `simulate_trials` and `simulate_compare` functions.
+These functions can be called for any dose-escalation design in `escalation`.
 Specifying dose-escalation models is the focus of the package [README file](https://brockk.github.io/escalation/).
+
+`simulate_trials` runs simulations for a single particular design. 
+This is the focus of this vignette.
+In contrast, `simulate_compare` compares several competing designs using efficient methods that share notional patients across designs, ensuring efficient comparisons.
+This topic is the focus of the [Simulation Comparison vignette](A710-SimulationComparison.html).
+
 
 ## The simplest example
 Let us start with a very simple example by simulating performance of the 3+3 design in trial of five doses.
@@ -63,8 +71,9 @@ library(escalation)
 ```
 
 For the purposes of illustration, let us simulate a modest number of trials:
+
 ```{r}
-num_sims <- 50
+num_sims <- 20
 ```
 
 In reality, if we want to have confidence in the simulated results, we would tend to run thousands of iterations [@wheelerHowDesignDosefinding2019].
@@ -181,7 +190,7 @@ as_tibble(sims) %>%
 
 ## A more complex example
 Let us consider now a model-based dose-finding approach in the same scenario.
-We will investogate a CRM design, using the model from the `dfcrm` package.
+We will investigate a CRM design, using the model from the `dfcrm` package.
 Let us say that we are targeting a 25% toxicity rate:
 
 ```{r}
@@ -209,6 +218,8 @@ sims
 
 The first thing we note is that the CRM design is much less likely to select dose 1 and more likely to select dose 2.
 If we believe that efficacy is associated with toxicity (and we should if we are using the CRM approach), then this is a good thing.
+Note, however, that comparing separate simulations is not the most efficient method to compare competing designs.
+A preferable method is to use `simulate_compare`, demonstrated below.
 
 However, our design has no method to stop if all doses are too toxic.
 We saw above that the 3+3 design occasionally recommended no dose.
@@ -258,7 +269,10 @@ sims
 Pleasingly, the expected sample size only increases by about 3 patients.
 Obviously, the maximum increases by 6 patients.
 
+
 ## Further refinements
+
+The following behaviours apply to both `simulate_trials` and `simulate_compare`.
 
 ### Cohort size
 All of the above simulations assume that patients are evaluated in cohorts of three.

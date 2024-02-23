@@ -32,11 +32,12 @@ This method selects dose by the algorithm for identifying the maximum
 tolerable dose (MTD) described in Yan et al. (2019). This class is intended
 to be used when a BOIN trial has reached its maximum sample size. Thus, it
 intends to make the final dose recommendation after the regular BOIN dose
-selection algorithm, as implemented by \code{\link{get_boin}}, has gracefully
-concluded a dose-finding trial. However, the class can be used in any
-scenario where there is a target toxicity rate. See Examples.
-Note - this class will not override the parent dose selector when the parent
-is advocating no dose. Thus this class will not reinstate a dangerous dose.
+selection algorithm, as implemented by \code{\link{get_boin}}, including any
+additional behaviours that govern stopping (etc), has gracefully concluded a
+dose-finding trial. However, the class can be used in any scenario where
+there is a target toxicity rate. See Examples. Note - this class will not
+override the parent dose selector when the parent is advocating no dose. Thus
+this class will not reinstate a dangerous dose.
 }
 \examples{
 # This class is intended to make the final dose selection in a BOIN trial:
@@ -48,7 +49,8 @@ model <- get_boin(num_doses = 5, target = target) \%>\%
 outcomes <- '1NNN 2NTN 2NNN 3NTT'
 model \%>\% fit(outcomes) \%>\% recommended_dose()
 
-# However, we can use this method to select dose at every dose decision:
+# However, since behaviour is modular in this package, we can use this method
+# to select dose at every dose decision if we wanted:
 model2 <- get_boin(num_doses = 5, target = target) \%>\%
   select_boin_mtd(when = 'always')
 model2 \%>\% fit('1NNT') \%>\% recommended_dose()
@@ -63,9 +65,8 @@ model3 \%>\% fit('1NNN 2NNT') \%>\% recommended_dose()
 
 }
 \references{
-Yan, F., Pan, H., Zhang, L., Liu, S., & Yuan, Y. (2019).
-BOIN: An R Package for Designing Single-Agent and Drug-Combination
-Dose-Finding Trials Using Bayesian Optimal Interval Designs.
-Journal of Statistical Software, 27(November 2017), 0–35.
-https://doi.org/10.18637/jss.v000.i00
+Yan, F., Pan, H., Zhang, L., Liu, S., & Yuan, Y. (2019). BOIN: An
+R Package for Designing Single-Agent and Drug-Combination Dose-Finding Trials
+Using Bayesian Optimal Interval Designs. Journal of Statistical Software,
+27(November 2017), 0–35. https://doi.org/10.18637/jss.v000.i00
 }

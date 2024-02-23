@@ -14,6 +14,10 @@ test_that('stop_when_too_toxic_selector does what it should.', {
   prob_too_toxic <- prob_tox_exceeds(fit, target + 0.1)
   expect_equal(recommended_dose(fit), fit$parent$dfcrm_fit$mtd)
   expect_equal(continue(fit), prob_too_toxic[1] < 0.8)
+  expect_output(
+    print(fit),
+    "The model advocates continuing at dose 1."
+  )
   expect_equal(dose_admissible(fit), prob_too_toxic < 0.8)
 
 
@@ -21,8 +25,14 @@ test_that('stop_when_too_toxic_selector does what it should.', {
   set.seed(123)
   fit <- model1 %>% fit('2NTN 1TTT')
   prob_too_toxic <- prob_tox_exceeds(fit, target + 0.1)
+  expect_true(is.na(recommended_dose(fit)))
   expect_equal(continue(fit), prob_too_toxic[1] < 0.8)
+  expect_output(
+    print(fit),
+    "The model advocates stopping and recommending no dose."
+  )
   expect_equal(dose_admissible(fit), prob_too_toxic < 0.8)
+
 })
 
 test_that('stop_when_too_toxic_selector supports correct interface.', {
@@ -353,5 +363,77 @@ test_that('stop_when_too_toxic_selector supports correct interface.', {
   expect_output(print(x))
   expect_true(tibble::is_tibble(as_tibble(x)))
   expect_true(nrow(as_tibble(x)) >= num_doses(x))
+
+})
+
+test_that("stop_when_too_toxic_selector plays nicely with other selectors", {
+
+  skeleton <- c(0.05, 0.10, 0.25, 0.40, 0.60)
+  target <- 0.25
+  design <- get_dfcrm(skeleton = skeleton, target = target) %>%
+    stop_at_n(n = 12) %>%
+    stop_when_too_toxic(dose = 1, tox_threshold = 0.35, confidence = 0.7)
+
+  # Scenario that should continue:
+  x <- design %>% fit("1NNN")
+  expect_equal(
+    recommended_dose(x),
+    4
+  )
+  expect_equal(
+    continue(x),
+    prob_tox_exceeds(x, threshold = 0.35)[1] < 0.7
+  )
+  expect_output(
+    print(x),
+    "The model advocates continuing at dose 4."
+  )
+
+  # Another scenario that should continue:
+  x <- design %>% fit("1NNT")
+  expect_equal(
+    recommended_dose(x),
+    1
+  )
+  expect_equal(
+    continue(x),
+    prob_tox_exceeds(x, threshold = 0.35)[1] < 0.7
+  )
+  expect_output(
+    print(x),
+    "The model advocates continuing at dose 1."
+  )
+
+  # Scenario that should stop:
+  x <- design %>% fit("1NTT")
+  expect_equal(
+    recommended_dose(x),
+    NA
+  )
+  expect_equal(
+    continue(x),
+    prob_tox_exceeds(x, threshold = 0.35)[1] < 0.7
+  )
+  expect_output(
+    print(x),
+    "The model advocates stopping and recommending no dose."
+  )
+
+  # Scenario where we don't stop for tox but a parent object stops the trial
+  x <- design %>% fit("1NNN 2NNN 3NNN 4NTT")
+  expect_equal(
+    recommended_dose(x),
+    3
+  )
+  expect_equal(
+    continue(x),
+    FALSE
+  )
+  expect_output(
+    print(x),
+    "The model advocates stopping and recommending dose 3."
+  )
+
+  # Dose is given but continue is FALSE, as required.
 
 })

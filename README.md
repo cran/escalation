@@ -5,10 +5,7 @@
 
 <!-- badges: start -->
 
-[![Travis build
-status](https://app.travis-ci.org/brockk/escalation.svg?branch=master)](https://app.travis-ci.com/brockk/escalation)
-[![Codecov test
-coverage](https://app.codecov.io/gh/brockk/escalation/branch/master/graph/badge.svg)](https://app.codecov.io/gh/brockk/escalation?branch=master)
+[![R-CMD-check](https://github.com/brockk/escalation/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/brockk/escalation/actions/workflows/R-CMD-check.yaml)
 [![cran
 version](http://www.r-pkg.org/badges/version/escalation)](https://cran.r-project.org/package=escalation)
 ![](https://cranlogs.r-pkg.org/badges/escalation)
@@ -22,9 +19,61 @@ by Kristian Brock. Documentation is hosted at
 
 `escalation` provides a grammar for dose-finding clinical trials.
 
-It starts by providing functions to use dose-escalation methodologies
-like the continual reassessment method (CRM), the Bayesian optimal
-interval design (BOIN), and the perennial 3+3:
+Here is a trivial example. Everyone knows that a 3+3 design will
+escalate after it sees no toxicities in a cohort of three:
+
+``` r
+library(escalation)
+
+get_three_plus_three(num_doses = 5) %>% 
+  fit("1NNN") %>% 
+  recommended_dose()
+```
+
+    ## [1] 2
+
+but that it will stick when it sees one-out-of-three toxicities in a
+cohort:
+
+``` r
+x <- get_three_plus_three(num_doses = 5) %>% 
+  fit("1NNN 2NNN 3NNT")
+recommended_dose(x)
+```
+
+    ## [1] 3
+
+``` r
+continue(x)
+```
+
+    ## [1] TRUE
+
+Having escalated through doses 1 and 2, here the design advocates
+treating another cohort at dose 3.
+
+``` r
+x <- get_three_plus_three(num_doses = 5) %>% 
+  fit("1NNN 2NNN 3NNT 3NTN")
+recommended_dose(x)
+```
+
+    ## [1] 2
+
+``` r
+continue(x)
+```
+
+    ## [1] FALSE
+
+When it sees two-out-of-six toxicities at dose 3, it concludes that dose
+3 is too toxic, dose 2 is the MTD, and the trial should stop.
+
+`escalation` provides functions to use common dose-escalation
+methodologies like the continual reassessment method (CRM), the Bayesian
+optimal interval design (BOIN), the TPI suite of designs,
+efficacy-toxicity designs like EffTox or Wages & Tait, and (as we have
+seen) the perennial 3+3:
 
 - `get_dfcrm()`
 - `get_trialr_crm()`
@@ -37,7 +86,7 @@ interval design (BOIN), and the perennial 3+3:
 - `get_wages_and_tait()`
 - `get_three_plus_three()`
 
-These functions fetch model fitting objects. Where possible, technical
+These functions create model fitting objects. Where possible, technical
 implementations are imported from existing R packages like `dfcrm`,
 `trialr`, and `BOIN`. Where no external implementations is available
 however, methods are implemented natively in `escalation`.
@@ -59,14 +108,14 @@ certain sample size. `escalation` supports the following behaviours:
 
 Each of these functions overrides the way doses are selected or when a
 design decides to stop the trial. The behaviours can be flexibly
-combined using the `%>%` operator from the tidyverse.
+combined using the `%>%` operator from the `tidyverse` suite.
 
 These models are then fit to trial outcomes to produce dose
 recommendations. No matter how the dose selection behaviours were
 combined, the resulting model fits supports a standard interface. The
 two most important methods are `recommended_dose()` to get the current
-dose selection, and `continue()` to learn whether the model advocates
-continuing patient recruitment.
+dose recommendation, and `continue()` to learn whether the design
+advocates continuing patient recruitment.
 
 Having defined this nomenclature for combining dose selection behaviours
 and providing a standard interface for the resulting analyses, it is
@@ -137,10 +186,6 @@ To begin, let us load `escalation`
 library(escalation)
 ```
 
-    ## Loading required package: magrittr
-
-    ## Warning: package 'magrittr' was built under R version 4.0.5
-
 At the core of the dose selection process is an algorithm or a model
 that selects doses in responses to outcomes. The classes capable of
 performing this core role are:
@@ -149,18 +194,22 @@ performing this core role are:
   [`dfcrm`](https://cran.r-project.org/package=dfcrm)
 - `get_trialr_crm()` using the model-fitting code from
   [`trialr`](https://cran.r-project.org/package=trialr)
-- `get_trialr_nbg()`
+- `get_trialr_nbg()` using the model-fitting code from
+  [`trialr`](https://cran.r-project.org/package=trialr)
 - `get_boin()` using the model-fitting code from
   [`BOIN`](https://cran.r-project.org/package=BOIN)
 - `get_tpi()`
 - `get_mtpi()`
-- `get_trialr_efftox()`
+- `get_mtpi2()`
+- `get_trialr_efftox()` using the model-fitting code from
+  [`trialr`](https://cran.r-project.org/package=trialr)
 - `get_wages_and_tait()`
 - `get_three_plus_three()`
 - and `follow_path()`
 
 Where indicated these methods rely on external packages. Otherwise,
-methods are implemented natively in `escalation`. We look at each now.
+methods are implemented natively in `escalation`. We look at several of
+these below.
 
 ### get_dfcrm
 
@@ -250,8 +299,8 @@ fit %>% recommended_dose()
 ### get_trialr_crm
 
 We could instead fit the CRM models above using the
-[`trialr`](https://cran.r-project.org/package=trialr) package by (@
-Brock 2019, 2020).
+[`trialr`](https://cran.r-project.org/package=trialr) package by (Brock
+2019, 2020).
 
 Reusing the `skeleton` and `target` variables defined above, we fit the
 same empiric model
@@ -295,18 +344,18 @@ fit %>% prob_tox_samples() %>% head(10)
 ```
 
     ## # A tibble: 10 × 6
-    ##    .draw      `1`          `2`       `3`     `4`    `5`
-    ##    <chr>    <dbl>        <dbl>     <dbl>   <dbl>  <dbl>
-    ##  1 1     1.14e- 5 0.000159     0.00516   0.0308  0.144 
-    ##  2 2     4.57e- 5 0.000462     0.00981   0.0470  0.182 
-    ##  3 3     4.49e- 5 0.000455     0.00972   0.0468  0.181 
-    ##  4 4     4.76e- 3 0.0164       0.0842    0.195   0.402 
-    ##  5 5     6.90e-10 0.0000000909 0.0000576 0.00158 0.0274
-    ##  6 6     1.10e- 2 0.0312       0.124     0.251   0.463 
-    ##  7 7     1.10e- 2 0.0312       0.124     0.251   0.463 
-    ##  8 8     1.26e- 2 0.0347       0.132     0.262   0.474 
-    ##  9 9     3.41e- 7 0.0000107    0.00102   0.0105  0.0789
-    ## 10 10    1.48e- 4 0.00114      0.0169    0.0674  0.222
+    ##    .draw      `1`      `2`          `3`        `4`     `5`
+    ##    <chr>    <dbl>    <dbl>        <dbl>      <dbl>   <dbl>
+    ##  1 1     4.39e- 2 9.04e- 2 0.235        0.384      0.587  
+    ##  2 2     3.39e- 6 6.24e- 5 0.00294      0.0212     0.117  
+    ##  3 3     8.03e- 2 1.44e- 1 0.311        0.462      0.651  
+    ##  4 4     7.41e- 2 1.35e- 1 0.300        0.451      0.642  
+    ##  5 5     5.32e- 2 1.05e- 1 0.257        0.408      0.606  
+    ##  6 6     5.60e- 7 1.57e- 5 0.00128      0.0122     0.0859 
+    ##  7 7     2.28e-17 1.62e-13 0.0000000199 0.00000812 0.00145
+    ##  8 8     2.14e- 1 3.06e- 1 0.490        0.624      0.769  
+    ##  9 9     2.63e- 1 3.58e- 1 0.539        0.664      0.796  
+    ## 10 10    1.70e- 1 2.56e- 1 0.441        0.582      0.739
 
 That facilitates really flexible inference. For example, what is the
 probability that toxicity at dose 3 is at least 5% greater than that at
@@ -321,7 +370,7 @@ fit %>% prob_tox_samples() %>%
     ## # A tibble: 1 × 1
     ##    prob
     ##   <dbl>
-    ## 1 0.571
+    ## 1 0.586
 
 ‘More likely than not’, is the answer.
 
@@ -367,9 +416,9 @@ the target toxicity level:
 fit %>% mean_prob_tox()
 ```
 
-    ##  [1] 0.01258690 0.03252256 0.06752086 0.13847209 0.20636157 0.26917718
-    ##  [7] 0.32637010 0.37801151 0.46612242 0.53711249 0.66158702 0.73901450
-    ## [13] 0.82594636 0.87171076 0.89929305
+    ##  [1] 0.01229476 0.03139614 0.06501636 0.13376511 0.20021181 0.26219444
+    ##  [7] 0.31900339 0.37057264 0.45907389 0.53075063 0.65691058 0.73549743
+    ## [13] 0.82365045 0.86996457 0.89783331
 
 This is perhaps unsurprising in a situation with so many doses.
 
@@ -425,7 +474,7 @@ sure that the associated toxicity rate exceeds the target.
 We fit the model to outcomes:
 
 ``` r
-fit <- model %>% fit('1NNT') 
+fit <- model %>% fit('1NNT')
 ```
 
 and learn that the recommended next dose is
@@ -441,6 +490,24 @@ dose 1, in accordance with Figure 2 of Ji et al. (2010).
 See the Modified Toxicity Probability Interval Design vignette for more
 information.
 
+### get_mtpi2
+
+mTPI was further updated by Guo et al. (2017) to produce mTPI2. Its
+parameterisation is similar to mTPI.
+
+``` r
+model <- get_mtpi2(num_doses = 5, target = 0.25, 
+                   epsilon1 = 0.05, epsilon2 = 0.05, 
+                   exclusion_certainty = 0.95)
+fit <- model %>% fit('1NNT')
+fit %>% recommended_dose()
+```
+
+    ## [1] 1
+
+Once again, see the Modified Toxicity Probability Interval Design
+vignette for more information.
+
 ### get_boin
 
 `escalate` also implements the Bayesian Optimal Interval (BOIN)
@@ -450,8 +517,7 @@ dose-finding design by Liu and Yuan (2015) via the
 
 In contrast to CRM, BOIN does not require a dose-toxicity skeleton. In
 its simplest case, it requires merely the number of doses under
-investigation and our target toxicity level. Continuing with our example
-above:
+investigation and our target toxicity level:
 
 ``` r
 target <- 0.25
@@ -500,13 +566,14 @@ that below.
 
 Since `escalation` provides many flexible options for stopping, we have
 made it possible to suppress BOIN’s native stopping rule via
-`use_stopping_rule = TRUE`.
+`use_stopping_rule = FALSE`. In this instance, the user may want to add
+their own stopping rule, e.g. using `stop_when_too_toxic`.
 
-Similar to the method described above, extra parameters are passed to
-the `get.boundary` function in the `BOIN` package to customise the
-escalation procedure. For instance, the boundaries that guide changes in
-dose are set to be 60% and 140% of the target toxicity rate, by default.
-To instead use 30% and 170%, we could run:
+Extra parameters are passed to the `get.boundary` function in the `BOIN`
+package to customise the escalation procedure. For instance, the
+boundaries that guide changes in dose are set to be 60% and 140% of the
+target toxicity rate, by default. To instead use 30% and 170%, we could
+run:
 
 ``` r
 get_boin(num_doses = 5, target = target, 
@@ -532,6 +599,49 @@ The parameter names `p.saf` and `p.tox` were chosen by the authors of
 the `BOIN` package.
 
 See the Bayesian Optimal Interval Design vignette for more information.
+
+### get_boin12
+
+`escalation` also supports designs that choose doses according to
+co-primary efficacy and toxicity outcomes, such as the BOIN12 design
+(Lin et al. 2020).
+
+We provide target toxicity and efficacy thresholds via `phi_t` and
+`phi_e`, the utility of ‘no efficacy and no toxicity’ via `u2`, and the
+utility of ‘efficacy with toxicity’ via `u3` on a (0, 100) scale:
+
+``` r
+# Examples in Lin et al.
+model <- get_boin12(num_doses = 5, 
+                    phi_t = 0.35, phi_e = 0.25,
+                    u2 = 40, u3 = 60)
+```
+
+In contrast to the examples above, outcomes now include efficacy as well
+as toxicity. `E` reflects efficacy only, and `B` reflects both efficacy
+and toxicity. The model-fitting process is largely the same though:
+
+``` r
+fit <- model %>% fit('1NNN 2ENT 3ETT 2EEN')
+```
+
+We have the usual interface:
+
+``` r
+fit %>% recommended_dose()
+```
+
+    ## [1] 2
+
+``` r
+fit %>% continue()
+```
+
+    ## [1] TRUE
+
+`escalation` also supports other so-called phase I/II designs that
+select doses by efficacy and toxicity like Wages and Tait (2015) and
+Thall and Cook (2004). See the help pages for more information.
 
 ### get_three_plus_three
 
@@ -732,7 +842,7 @@ This is in contrast to the scenario where a trial is stopped because all
 doses are inappropriate. In this scenario, the dose recommendation would
 be `NA`. We will encounter this in examples below.
 
-### stop_when_n\_at_dose
+### stop_when_n_at_dose
 
 Another common approach is to stop a dose-finding experiment when a
 given number of patients have been treated at a particular dose.
@@ -1022,7 +1132,7 @@ fit %>% prob_tox_exceeds(0.35) %>% round(2)
 
 but a non-statistical method like 3+3 does not.
 
-### demand_n\_at_dose
+### demand_n_at_dose
 
 We have looked at many behaviours that provide stopping. We can also
 look at some behaviours that delay stopping.
@@ -1222,10 +1332,12 @@ model %>%
 We have described at length above the flexible methods that `escalation`
 provides to specify dose-escalation designs and tailor trial behaviour.
 Once designs are specified, we can investigate their operating
-characteristics by simulation using the `simulate_trials` function. We
-can also exhaustively calculate dose recommendations for future cohorts
-using the `get_dose_paths` function. Both of these topics are the topics
-of full vignettes. Please check them out.
+characteristics by simulation using the `simulate_trials` function, and
+efficiently compare designs using Sweeting et al. (2023)’s method in
+`simulate_compare`. We can also exhaustively calculate dose
+recommendations for future cohorts using the `get_dose_paths` function.
+Both of these topics are the topics of full vignettes so please check
+them out.
 
 # Installation
 
@@ -1297,20 +1409,28 @@ Method*. <https://CRAN.R-project.org/package=dfcrm>.
 
 </div>
 
+<div id="ref-guo2017bayesian" class="csl-entry">
+
+Guo, Wentian, Sue-Jane Wang, Shengjie Yang, Henry Lynn, and Yuan Ji.
+2017. “A Bayesian Interval Dose-Finding Design addressingOckham’s Razor:
+mTPI-2.” *Contemporary Clinical Trials* 58: 23–33.
+
+</div>
+
 <div id="ref-Ji2007" class="csl-entry">
 
-Ji, Yuan, Yisheng Li, and B. Nebiyou Bekele. 2007. “<span
-class="nocase">Dose-finding in phase I clinical trials based on toxicity
-probability intervals</span>.” *Clinical Trials* 4 (3): 235–44.
+Ji, Yuan, Yisheng Li, and B. Nebiyou Bekele. 2007.
+“<span class="nocase">Dose-finding in phase I clinical trials based on
+toxicity probability intervals</span>.” *Clinical Trials* 4 (3): 235–44.
 <https://doi.org/10.1177/1740774507079442>.
 
 </div>
 
 <div id="ref-Ji2010" class="csl-entry">
 
-Ji, Yuan, Ping Liu, Yisheng Li, and B. Nebiyou Bekele. 2010. “<span
-class="nocase">A modified toxicity probability interval method for
-dose-finding trials</span>.” *Clinical Trials* 7 (6): 653–63.
+Ji, Yuan, Ping Liu, Yisheng Li, and B. Nebiyou Bekele. 2010.
+“<span class="nocase">A modified toxicity probability interval method
+for dose-finding trials</span>.” *Clinical Trials* 7 (6): 653–63.
 <https://doi.org/10.1177/1740774510382799>.
 
 </div>
@@ -1330,6 +1450,15 @@ Le Tourneau, Christophe, J. Jack Lee, and Lillian L. Siu. 2009. “Dose
 Escalation Methods in Phase i Cancer Clinical Trials.” *Journal of the
 National Cancer Institute* 101 (10): 708–20.
 <https://doi.org/10.1093/jnci/djp079>.
+
+</div>
+
+<div id="ref-lin2020boin12" class="csl-entry">
+
+Lin, Ruitao, Yanhong Zhou, Fangrong Yan, Daniel Li, and Ying Yuan. 2020.
+“BOIN12: Bayesian Optimal Interval Phase i/II Trial Design for
+Utility-Based Dose Finding in Immunotherapy and Targeted Therapies.”
+*JCO Precision Oncology* 4: 1393–1402.
 
 </div>
 
@@ -1353,9 +1482,9 @@ Continual Reassessment Method via a Modified Allocation Rule.”
 
 <div id="ref-Neuenschwander2008" class="csl-entry">
 
-Neuenschwander, Beat, Michael Branson, and Thomas Gsponer. 2008. “<span
-class="nocase">Critical aspects of the Bayesian approach to phase I
-cancer trials</span>.” *Statistics in Medicine* 27: 2420–39.
+Neuenschwander, Beat, Michael Branson, and Thomas Gsponer. 2008.
+“<span class="nocase">Critical aspects of the Bayesian approach to phase
+I cancer trials</span>.” *Statistics in Medicine* 27: 2420–39.
 <https://doi.org/10.1002/sim.3230>.
 
 </div>
@@ -1365,6 +1494,29 @@ cancer trials</span>.” *Statistics in Medicine* 27: 2420–39.
 O’Quigley, J, M Pepe, and L Fisher. 1990. “Continual Reassessment
 Method: A Practical Design for Phase 1 Clinical Trials in Cancer.”
 *Biometrics* 46 (1): 33–48. <https://doi.org/10.2307/2531628>.
+
+</div>
+
+<div id="ref-sweeting2023" class="csl-entry">
+
+Sweeting, Michael, Daniel Slade, Daniel Jackson, and Kristian Brock.
+2023. “Potential Outcome Simulation for Efficient Head-to-Head
+Comparison of Adaptive Dose-Finding Designs.” *Preprint*.
+
+</div>
+
+<div id="ref-thall2004dose" class="csl-entry">
+
+Thall, Peter F, and John D Cook. 2004. “Dose-Finding Based on
+Efficacy–Toxicity Trade-Offs.” *Biometrics* 60 (3): 684–93.
+
+</div>
+
+<div id="ref-wages2015seamless" class="csl-entry">
+
+Wages, Nolan A, and Christopher Tait. 2015. “Seamless Phase i/II
+Adaptive Design for Oncology Trials of Molecularly Targeted Agents.”
+*Journal of Biopharmaceutical Statistics* 25 (5): 903–20.
 
 </div>
 

@@ -38,6 +38,7 @@ ul.task-list{list-style: none;}
 </style>
 
 
+
 <style type="text/css">
 code {
 white-space: pre;
@@ -118,13 +119,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -363,10 +371,11 @@ the <code>escalation</code> package, be sure to check out the <a href="https://b
 how to compose dose-finding designs using the flexible syntax provided
 in <code>escalation</code>.</p>
 <p>Once you have composed a design that appeals, you will want to learn
-about its operating performance by running many simulated trials. That
-is the focus of this vignette. We study simulations because we believe
-they will predict the performance we can expect in reality. By operating
-performance, we mean:</p>
+about its operating performance by running many simulated trials, and
+possibly compare it to competing designs. That is the focus of this
+vignette. We study simulations because we believe they will predict the
+performance we can expect in reality. By operating performance, we
+mean:</p>
 <ul>
 <li>how often a design recommends a desirable dose;</li>
 <li>how many patients are treated;</li>
@@ -376,19 +385,31 @@ performance, we mean:</p>
 <li>how long trials take;</li>
 <li>and so on.</li>
 </ul>
+<p>We are often interested both in the absolute levels of these
+quantities, and how they compare to those of competing designs. When
+comparing designs, we have an efficient method called
+<code>simulate_compare</code> that examines the decisions of many design
+on the same simulated patients to reduce Monte Carlo uncertainty.</p>
 </div>
 <div id="simulating-trials-in-escalation" class="section level1">
 <h1>Simulating trials in <code>escalation</code></h1>
-<p>Simulations are run using the <code>simulate_trials</code> function.
-It can be called on any dose-escalation design. Specifying
+<p>Simulations are run using the <code>simulate_trials</code> and
+<code>simulate_compare</code> functions. These functions can be called
+for any dose-escalation design in <code>escalation</code>. Specifying
 dose-escalation models is the focus of the package <a href="https://brockk.github.io/escalation/">README file</a>.</p>
+<p><code>simulate_trials</code> runs simulations for a single particular
+design. This is the focus of this vignette. In contrast,
+<code>simulate_compare</code> compares several competing designs using
+efficient methods that share notional patients across designs, ensuring
+efficient comparisons. This topic is the focus of the <a href="A710-SimulationComparison.html">Simulation Comparison
+vignette</a>.</p>
 <div id="the-simplest-example" class="section level2">
 <h2>The simplest example</h2>
 <p>Let us start with a very simple example by simulating performance of
 the 3+3 design in trial of five doses. We need to specify the unknown
 true probabilities of toxicity at the doses under investigation. Let us
 investigate:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.12</span>, <span class="fl">0.27</span>, <span class="fl">0.44</span>, <span class="fl">0.53</span>, <span class="fl">0.57</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.12</span>, <span class="fl">0.27</span>, <span class="fl">0.44</span>, <span class="fl">0.53</span>, <span class="fl">0.57</span>)</span></code></pre></div>
 <p>That is, doses 1 and 2 are what most clinicians would describe as
 tolerable, but doses 3, 4, and 5 are reasonably toxic. The 3+3 design
 does not target a particular probability of toxicity but empirically,
@@ -396,58 +417,58 @@ the design tends to target doses with associated toxicity rates of
 10-25%<span class="citation">(Korn et al. 1994; Iasonos et al.
 2008)</span>.</p>
 <p>We must load the <code>escalate</code> package:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(escalation)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(escalation)</span></code></pre></div>
 <p>For the purposes of illustration, let us simulate a modest number of
 trials:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">20</span></span></code></pre></div>
 <p>In reality, if we want to have confidence in the simulated results,
 we would tend to run thousands of iterations <span class="citation">(Wheeler et al. 2019)</span>. We run a small number
 here so that this vignette compiles quickly.</p>
 <p>We run simulations in our scenario using:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_three_plus_three</span>(<span class="at">num_doses =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_three_plus_three</span>(<span class="at">num_doses =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
 <p>We set the random number generator seed in the example above so that
 results are (hopefully) reproducible. Despite setting the seed, the
 results could still vary across different operating systems or versions
 of R.</p>
 <p>When printed to the screen, the <code>sims</code> object shows some
 useful summary information:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sims</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.08   0.40   0.38   0.10   0.04   0.00 </span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      2      3      4      5 </span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.3466 0.3864 0.2045 0.0455 0.0170 </span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    3.00    9.00    9.00   10.56   12.00   24.00 </span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    2.00    2.00    2.50    2.66    3.00    6.00 </span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    2.70    7.05   10.55   11.20   14.55   27.10</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>sims</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 20 </span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;   0.10   0.45   0.30   0.15   0.00   0.00 </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;      1      2      3      4      5 </span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; 0.3731 0.3731 0.1791 0.0746 0.0000 </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;    6.00    8.25    9.00   10.05   12.00   18.00 </span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;    2.00    2.00    2.00    2.40    2.25    5.00 </span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt;   4.200   5.925   9.150  10.335  13.950  21.800</span></span></code></pre></div>
 <p>Each of those pieces of information is available progmatically by R
 functions. For instance, the probability of recommending each dose at
 the final analysis, inferred from these simulated iterations, is:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.08   0.40   0.38   0.10   0.04   0.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;   0.10   0.45   0.30   0.15   0.00   0.00</span></span></code></pre></div>
 <p>Bear in mind that these probabilities are the result of a random
 process. If we run the simulations again with a different seed, we will
 get different results. Recall also that they are informed by a small
@@ -459,87 +480,86 @@ recommend one of the first two doses. However, there is a non-trivial
 probability that the design will recommend the third dose, which is
 probably too toxic, or recommend no dose at all.</p>
 <p>How many patients are required?</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">num_patients</span>(sims))</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    3.00    9.00    9.00   10.56   12.00   24.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">num_patients</span>(sims))</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt;    6.00    8.25    9.00   10.05   12.00   18.00</span></span></code></pre></div>
 <p>We see that the simulated trials use between 3 and 24 patients, with
 an expected number of 9-12.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   3.000   3.000   3.000   3.783   5.250   6.000       4</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt;   3.000   3.000   3.000   3.667   3.000   6.000       2</span></span></code></pre></div>
 <p>Of those, 3-4 at treated at the dose that is eventually
 recommended.</p>
 <p>We can see how many patients are treated at each dose on a
 trial-by-trial basis. Here are the allocation counts for the first 10
 trials:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">n_at_dose</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">10</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 5</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      `1`   `2`   `3`   `4`   `5`</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     3     0     0     0     0</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     6     6     6     6     0</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     6     6     0     0     0</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     3     3     3     0     0</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     3     3     6     3     0</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     3     6     0     0     0</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     6     3     0     0     0</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     3     3     3     0     0</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     6     3     6     0     0</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     3     3     3     0     0</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">n_at_dose</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">10</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 5</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;      `1`   `2`   `3`   `4`   `5`</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;  1     6     0     0     0     0</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt;  2     3     6     0     0     0</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;  3     3     3     3     0     0</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;  4     6     0     0     0     0</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt;  5     3     3     3     0     0</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt;  6     3     3     6     0     0</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt;  7     3     3     0     0     0</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt;  8     3     3     0     0     0</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt;  9     3     3     3     0     0</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; 10     3     3     0     0     0</span></span></code></pre></div>
 <p>This information is aggregated in the probabilities of administation,
 i.e. the probability that an individual patient is treated at each
 dose-level:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prob_administer</span>(sims)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          1          2          3          4          5 </span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.34659091 0.38636364 0.20454545 0.04545455 0.01704545</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">prob_administer</span>(sims)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt;          1          2          3          4          5 </span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; 0.37313433 0.37313433 0.17910448 0.07462687 0.00000000</span></span></code></pre></div>
 <p>We might be alarmed to learn that roughly 25% of patients are treated
 at doses 3-5, the doses we believe to be excessively toxic.</p>
 <p>We can also see how many toxicities there were at each dose in the
 simulated trials (again, here are just the first 10):</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tox_at_dose</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">10</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 5</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      `1`   `2`   `3`   `4`   `5`</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1     2     0     0     0     0</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2     1     1     1     3     0</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3     1     2     0     0     0</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4     0     0     3     0     0</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5     0     0     1     2     0</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6     0     2     0     0     0</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7     1     2     0     0     0</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8     0     0     2     0     0</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9     1     0     2     0     0</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10     0     0     2     0     0</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">tox_at_dose</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">10</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 5</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;      `1`   `2`   `3`   `4`   `5`</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;  1     2     0     0     0     0</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt;  2     0     2     0     0     0</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;  3     0     0     2     0     0</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt;  4     2     0     0     0     0</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt;  5     0     0     2     0     0</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt;  6     0     0     2     0     0</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt;  7     0     2     0     0     0</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt;  8     0     2     0     0     0</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt;  9     0     0     2     0     0</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; 10     0     2     0     0     0</span></span></code></pre></div>
 <p>and a summary of the total number of toxicities seen in the
 replicates:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">num_tox</span>(sims))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    2.00    2.00    2.50    2.66    3.00    6.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">num_tox</span>(sims))</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt;    2.00    2.00    2.00    2.40    2.25    5.00</span></span></code></pre></div>
 <p>We expect to see about 2-3 toxicities using this design in this
 scenario with no iteration producing more than 6 toxicities.</p>
 <p>For convenience, simulations can be cast to a
 <code>tibble</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">12</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 12 × 12</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    .iteration .depth  time dose     tox     n empiric_…¹ mean_…² media…³ admis…⁴</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;lgl&gt;  </span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1          1      2   2.7 NoDose     0     0      0           0       0 TRUE   </span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2          1      2   2.7 1          2     3      0.667      NA      NA FALSE  </span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3          1      2   2.7 2          0     0    NaN          NA      NA FALSE  </span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4          1      2   2.7 3          0     0    NaN          NA      NA FALSE  </span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5          1      2   2.7 4          0     0    NaN          NA      NA FALSE  </span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6          1      2   2.7 5          0     0    NaN          NA      NA FALSE  </span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7          2      9  27.1 NoDose     0     0      0           0       0 TRUE   </span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8          2      9  27.1 1          1     6      0.167      NA      NA TRUE   </span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9          2      9  27.1 2          1     6      0.167      NA      NA TRUE   </span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10          2      9  27.1 3          1     6      0.167      NA      NA TRUE   </span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11          2      9  27.1 4          3     6      0.5        NA      NA FALSE  </span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12          2      9  27.1 5          0     0    NaN          NA      NA FALSE  </span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 2 more variables: recommended &lt;lgl&gt;, true_prob_tox &lt;dbl&gt;, and</span></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   abbreviated variable names ¹​empiric_tox_rate, ²​mean_prob_tox,</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ³​median_prob_tox, ⁴​admissible</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">12</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 12 × 12</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;    .iteration .depth  time dose     tox     n empiric_tox_rate mean_prob_tox</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;         &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;  1          1      3   4.2 NoDose     0     0            0                 0</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;  2          1      3   4.2 1          2     6            0.333            NA</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;  3          1      3   4.2 2          0     0          NaN                NA</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  4          1      3   4.2 3          0     0          NaN                NA</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  5          1      3   4.2 4          0     0          NaN                NA</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;  6          1      3   4.2 5          0     0          NaN                NA</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;  7          2      4   9.9 NoDose     0     0            0                 0</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;  8          2      4   9.9 1          0     3            0                NA</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt;  9          2      4   9.9 2          2     6            0.333            NA</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; 10          2      4   9.9 3          0     0          NaN                NA</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; 11          2      4   9.9 4          0     0          NaN                NA</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; 12          2      4   9.9 5          0     0          NaN                NA</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 4 more variables: median_prob_tox &lt;dbl&gt;, admissible &lt;lgl&gt;,</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; #   recommended &lt;lgl&gt;, true_prob_tox &lt;dbl&gt;</span></span></code></pre></div>
 <p>This returns a <code>tidyverse</code> <code>tibble</code>,
 essentially a fancy data-frame, with the followign columns:</p>
 <ul>
@@ -571,103 +591,106 @@ toxicity in this simulated scenario.</li>
 analysis and visualisation. For instance, using further
 <code>tidyverse</code> packages, it is simple to visualise the
 frequencies of the final model recommendations:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(recommended) <span class="sc">%&gt;%</span> </span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> dose, <span class="at">fill =</span> dose)) <span class="sc">+</span> </span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>()</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="fu">filter</span>(recommended) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> dose, <span class="at">fill =</span> dose)) <span class="sc">+</span> </span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="fu">geom_bar</span>()</span></code></pre></div>
+<p><img src="data:image/png;base64,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hEhXyqfRzGOPPTY++OCD7Lym2267Lbbffvts9K7FSmYQIECAAAECBAjUrUDNAujLL78ca6+9dguoI444Ip5//vlYZ5114ktf+lKMHj069ttvv3jqqafioIMOarG8GQQIECBAgAABAvUtULNzQK+99tpWpe64447S/BQ4DzzwwJgxY4ar/koqHhAgQIAAAQIEiiVQsxHQjrKlC2bccqKjWpYjQIAAAQIECNSfQO4CaP0RajEBAgQIECBAgEA5AgJoOVqWJUCAAAECBAgQqFhAAK2Y0AYIECBAgAABAgTKERBAy9GyLAECBAgQIECAQMUCAmjFhDZAgAABAgQIECBQjoAAWo6WZQkQIECAAAECBCoWEEArJrQBAgQIECBAgACBcgQE0HK0LEuAAAECBAgQIFCxgABaMaENECBAgAABAgQIlCMggJajZVkCBAgQIECAAIGKBQTQigltgAABAgQIECBAoBwBAbQcLcsSIECAAAECBAhULCCAVkxoAwQIECBAgAABAuUICKDlaFmWAAECBAgQIECgYgEBtGJCGyBAgAABAgQIEChHQAAtR8uyBAgQIECAAAECFQsIoBUT2gABAgQIECBAgEA5AgJoOVqWJUCAAAECBAgQqFhAAK2Y0AYIECBAgAABAgTKERBAy9GyLAECBAgQIECAQMUCAmjFhDZAgAABAgQIECBQjoAAWo6WZQkQIECAAAECBCoWEEArJrQBAgQIECBAgACBcgQE0HK0LEuAAAECBAgQIFCxgABaMaENECBAgAABAgQIlCMggJajZVkCBAgQIECAAIGKBQTQigltgAABAgQIECBAoBwBAbQcLcsSIECAAAECBAhULCCAVkxoAwQIECBAgAABAuUICKDlaFmWAAECBAgQIECgYgEBtGJCGyBAgAABAgQIEChHQAAtR8uyBAgQIECAAAECFQsIoBUT2gABAgQIECBAgEA5AgJoOVqWJUCAAAECBAgQqFhAAK2Y0AYIECBAgAABAgTKERBAy9GyLAECBAgQIECAQMUCAmjFhDZAgAABAgQIECBQjoAAWo6WZQkQIECAAAECBCoWEEArJrQBAgQIECBAgACBcgQE0HK0LEuAAAECBAgQIFCxgABaMaENECBAgAABAgQIlCMggJajZVkCBAgQIECAAIGKBQTQigltgAABAgQIECBAoBwBAbQcLcsSIECAAAECBAhULCCAVkxoAwQIECBAgAABAuUICKDlaFmWAAECBAgQIECgYgEBtGJCGyBAgAABAgQIEChHoHs5C+dt2W7dusXgwYPz1qxctadHjx7R0NDAKVdV0ZjOCPhZX6TW2Lho3GDgwIGxcOHCzlBap04EunfvHqne3vvtF2zevHntL+DVXArUdQCdP39+TJ8+PZeweWnUoEGDsl9gU6ZMyUuTtINApwS8hxex9erVK4YMGRLTpk2L9DvQVFyBAQMGRM+ePcN7v/0aJ6N+/fq1v5BXcyfgEHzuSqJBBAgQIECAAIFiCwigxa6v3hEgQIAAAQIEcicggOauJBpEgAABAgQIECi2gABa7PrqHQECBAgQIEAgdwICaO5KokEECBAgQIAAgWILCKDFrq/eESBAgAABAgRyJyCA5q4kGkSAAAECBAgQKLaAAFrs+uodAQIECBAgQCB3AgJo7kqiQQQIECBAgACBYgvU9SchFbs0ekeAQCUCu/15TCWrW3cZCtyxjdotQ367JlATASOgNWG2EwIECBAgQIAAgSYBAbRJwncCBAgQIECAAIGaCAigNWG2EwIECBAgQIAAgSYBAbRJwncCBAgQIECAAIGaCAigNWG2EwIECBAgQIAAgSYBAbRJwncCBAgQIECAAIGaCAigNWG2EwIECBAgQIAAgSYBAbRJwncCBAgQIECAAIGaCAigNWG2EwIECBAgQIAAgSYBAbRJwncCBAgQIECAAIGaCAigNWG2EwIECBAgQKAIApdcckk8+uijRejKMu2DALpM+e2cAAECBAgQqCeBH//4x/Hwww/XU5Nz2VYBNJdl0SgCBAgQIECAQHEFuhe3a3pGgAABAgQIEKhMYNy4cXH99dfHe++9F4cffniLjU2aNCl+8IMfxNNPPx0rr7xyHHDAAfGZz3ymtNyvfvWruPnmm2POnDkxcuTIOPHEE2PIkCGl16+88sq47bbbYtasWbHDDjvEUUcdFd27Fz+eGQEtvQU8IECAAAECBAj8R+DOO++MPfbYIxYuXBibbbZZHHroofHyyy+XFpgyZUpsuummcfvtt2fLLViwID7/+c/HpZdemi2TwuWxxx4b2223Xeyzzz5x7733xqc//enS+t/+9rfj+OOPj/XWWy+22Wab+P73vx9f/vKXS68X+UHxI3aRq6dvBAgQIECAQNUEjjnmmDj11FPjjDPOyPax9957x8c+9rHS/s4777yYPn16/Otf/4qePXvGt771rVh99dXj5JNPjoMPPjgeeuihLLged9xx0dDQkAXRW265JWbPnp0F2XRB09VXXx1f/epXs22m8JnC6B//+MfYfvvtS/sp4gMBtIhV1ScCBAgQIECgIoH3338/Xnjhhdhxxx1L2xk6dGizAPrEE09kI5opfDZNaQT0wgsvjOeffz723Xff2G233WLdddeNz372s/G5z32udIj98ccfz0ZWH3vssezwfdP6/fr1i/Ra0QOoQ/BNFfedAAECBAgQIPB/AmlkMx1SnzdvXjOTHj16lJ5PmzYtG/Eszfj3g3QeaJrmz5+fndP51FNPZUH0T3/6U+y6666x5ZZbxtSpU7OvdK5nr169orGxsfSVzgHdYIMNsm0U+R8joEWurr4RIECAAAECnRJYZZVVIn2li5BGjRqVbWPy5Mkxfvz40vbSyGY6T3TxKT1PwXLDDTeMu+66K/r37x/nnHNO9vXkk0/GFltskc1P686dOzc7ZzSd/5mmFFrTRUuLH+ZffNtFemwEtEjV1BcCBAgQIEBgqQmk8zivueaauP/++yNdcHTmmWdmh82bdvBf//Vf8c9//jM75J5GTB944IG47LLLsguS0shmujL+wAMPzA7lpwuZ3nzzzWxEdZ111slGR9dff/3s/NJnn302uwp+zJgxcdJJJ8WAAQOadlHY70ZAC1taHSNAgAABAgQqEUgjl2+//Xbsvvvu2ejkLrvskl313rTNdJ7m//zP/8QJJ5wQp59+ejbyueeee2bz0jJHH310pFHPrbfeOguY6VD72LFjswuT0uvpgqRDDjkkNtpoo+jbt2+MGDEirrrqqlhhhRXSy4WeGv6dyBfWaw/TuRczZ86s1+bXpN2DBg3Kzit59913a7K/etjJqKN/Ug/N1MYlBO6/+JtLzGn/6W5/HtP+Al7NrcAd26hdKk4aBUsXt6QAZGpbIBktv/zybS+wFF5J9+icMWNGm8EwRanXXnstO2S/+DmiTbtO55JOnDgx1lhjjexq+Kb5Td9Tnknnmla7H037y8N3I6B5qII2ECBAgAABArkV6N27d6SvtqZ0i6U111yzrZezgaD2Xh84cGCb6xb1BeeAFrWy+kWAAAECBAgQyKmAAJrTwmgWAQIECBAgQKCoAgJoUSurXwQIECBAgACBnAoIoDktjGYRIECAAAECBIoqIIAWtbL6RYAAAQIECBDIqYAAmtPCaBYBAgQIECBAoKgCbsNU1MrqFwECBAgQIFCRQPrM9mpN6T7dXXkSQLty9fWdAAECBAgQaFdg58F7tft6Z168e8pvOrNaodZxCL5Q5dQZAgQIECBAgED+BQTQ/NdICwkQIECAAAEChRIQQAtVTp0hQIAAAQIECORfQADNf420kAABAgQIECBQKAEBtFDl1BkCBAgQIECAQP4FXAWf/xppIQECBAgQINCFBJ555pl47rnn4itf+UqzXl9zzTWx6667xpAhQ5rNX/zJs88+Gw899FA2q1u3brH88svH9ttvH4MHD158sWX+2AjoMi+BBhAgQIAAAQIE/iPwhz/8Ifbee+/43e9+95+Z/3500kknxcSJE5vNW/LJvffeG+eff348+eST8Ze//CUuvfTSWHvtteO2225bctFl+twI6DLlt3MCBAgQIECAQEuBtdZaK77xjW/Etttu2+7o5QsvvBArr7xyDBgwoLSRjTfeOAueTTNuvPHGOPTQQ7NR1TQi2jS1tu6UKVPi1VdfjaFDh0b//v2bFo2FCxfGSy+9FD179ow111yzNL+zD2oyAjpjxox4+OGHm3211eDnn38+xo0bF2+//XZbi5hPgAABAgQIECi0wA477BA77bRTHH300a3289Zbb40NN9wwRo8enQXCNNLZ1pQO5ffo0SP+9Kc/ZYu0tW46xP+JT3wizjjjjBg+fHik52lKoXSrrbbKTglIh/O/8IUvZIE0e7GT/9QkgD722GNx4YUXxs0331z6aq29F110UbZcGjY+7LDD4pVXXmltMfMIECBAgAABAoUXuPjii+Oee+6JW265pVlf33///fja174Wl1xySdx3333xt7/9LcaMGRNz585tttziTzbbbLNIg3ztrXvFFVfE97///fjtb3+b7TMFzzTdcMMNsckmm8QTTzwRadQ07Scd3q9kqskh+NTYPfbYIw466KA22zphwoR48MEH46abborGxsa47rrr4te//nWccsopba7jBQIECBAgQIBAUQXShUOXXXZZNsq53XbblbqZLlDq3bt3dnFRmpkO13/sYx+LdO5oW9PMmTOjX79+2WH4ttY9+OCDI31dfvnlseeee8b++++fbS4dwk9Tei1Nb731VpbXttlmm+x5Z/6pWQBN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IIDmuDiaRoAAAQIECBAoooAAWsSq6hMBAgQIECBAIMcCAmiOi6NpBAgQIECAAIEiCgigRayqPhEgQIAAAQIEciwggOa4OJpGgAABAgQIECiigABaxKrqEwECBAgQIEAgxwICaI6Lo2kECBAgQIAAgSIKCKBFrKo+ESBAgAABAgRyLCCA5rg4mkaAAAECBAgQKKKAAFrEquoTAQIECBAgQCDHAgJojoujaQQIECBAgACBIgoIoEWsqj4RIECAAAECBHIsIIDmuDiaRoAAAQIECBAoooAAWsSq6hMBAgQIECBAIMcCAmiOi6NpBAgQIECAAIEiCgigRayqPhEgQIAAAQIEciwggOa4OJpGgAABAgQIECiigABaxKrqEwECBAgQIEAgxwICaI6Lo2kECBAgQIAAgSIKCKBFrKo+ESBAgAABAgRyLCCA5rg4mkaAAAECBAgQKKKAAFrEquoTAQIECBAgQCDHAgJojoujaQQIECBAgACBIgoIoEWsqj4RIECAAAECBHIsIIDmuDiaRoAAAQIECBAoooAAWsSq6hMBAgQIECBAIMcCNQugb7/9dtx1113x/PPPt8uRXh83blyk5U0ECBAgQIAAAQLFE6hJAH3yySfjkEMOiX/84x/xne98J26++eZWJS+66KK48MILIy1/2GGHxSuvvNLqcmYSIECAAAECBAjUr0D3WjT9Rz/6UZx99tkxcuTI2HvvvePwww+P3XffPXr27Fna/YQJE+LBBx+Mm266KRobG+O6666LX//613HKKaeUlvGAAAECBAgQIECg/gWqHkDnzZsXr732WowYMSLTWnnllaNv374xceLEGDp0aEnwpZdeypZJ4TNNm266afz+978vvZ4eTJ8+PZ5++unSvJVWWimWX3750nMPup7A4n/EdL3ed60eq3XXqXfZtZ7ddWyK1NOy69xG55tyQxsvm51TgaoH0LfeeiuWW265aGhoKBEMHDgw3n333WYB9I033og0v2kaMGBAvPPOO01Ps+8vvvhidmi+aeaJJ56YjaY2Pa/k+2ML76lkdevWkcDzN55dR63V1M4KPLXXZZ1d1Xp1J/By3bVYgyOW1vDRBx98gLMOBaoeQLt16xbz589vRpNGRXv37t1s3pLLpWX69OnTbJnhw4dnFzI1zezRo0ekgGtqWyAF+fTX4dSpU9teyCuFEFhxxRVjxowZ4ZdxIcrZZifSqNGgQYOyP9CX/N3a5kpeqEuB/v37R/p/Lg3YmNoW6N69e4u80PbSXsmLQNUDaDpE/v7778fs2bOjV69eWb/TD9Nqq63WzCD95zl+/PjSvLTMqquuWnqeHqT1P/rRj5bmTZs2LWbOnFl67kFLgYULF0b68h9VS5sizlHrIla1eZ8WLFiQzUg/036um9sU7VmqtZ/pD69qGsAy1Z9A1a+CT3+ZbLnllnHrrbdmOg888EAMHjw4+0oz0sVHs2bNis033zyeeeaZePXVVyONfv7ud7+LLbbYov5EtZgAAQIECBAgQKBdgaqPgKa9H3nkkaXbL6XDwWeccUapUUcccUScf/752RXyo0ePzs7pHDJkSHzkIx+J/fbbr7ScBwQIECBAgAABAsUQaPj38P7CWnUlnYeYzl1qb5o7d252uL5fv37tLZa95hD8hxJl3in0O4fow63qfYlVVlklu1NEOuXFVFyBdCpS+iM9nf/uEHxx65x6ls7hT+f8+mCW9uucjNwRp32jPL5akxHQpo5/WPhMy6UTrtOXiQABAgQIECBAoJgCVT8HtJhsekWAAAECBAgQINBZAQG0s3LWI0CAAAECBAgQ6JSAANopNisRIECAAAECBAh0VkAA7ayc9QgQIECAAAECBDolIIB2is1KBAgQIECAAAECnRUQQDsrZz0CBAgQIECAAIFOCQignWKzEgECBAgQIECAQGcFBNDOylmPAAECBAgQIECgUwICaKfYrESAAAECBAgQINBZAQG0s3LWI0CAAAECBAgQ6JSAANopNisRIECAAAECBAh0VkAA7ayc9QgQIECAAAECBDolIIB2is1KBAgQIECAAAECnRVoWPjvqbMrWy//Ascee2y88847ceWVV+a/sVpYkcCIESPiuOOOi4MPPrii7Vg53wIPPvhgjB49OsaNGxdrrrlmvhurdRUJfPe7342//vWvceutt1a0HSsTyKOAEdA8VmUptmnBggUxf/78pbhFm8qrQKp1+jIVWyCNGaQ6Gzsodp1T7/z+Ln6Nu3IPBdCuXH19J0CAAAECBAgsA4Huy2CfdllDgY033jhmzJhRwz3a1bIS2GWXXWLo0KHLavf2WyOBFVdcMXbdddfo27dvjfZoN8tKYIMNNog+ffosq93bL4GqCjgHtKq8Nk6AAAECBAgQILCkgEPwS4p4ToAAAQIECBAgUFUBh+Crylv+xl966aV4+eWXY4cddmi28t133x1bbrllDBgwoNn8xZ/861//ir/97W/ZrMbGxmzZTTbZJPr377/4Yh4XVCCdavH000/HJz/5yYL2ULeSwD//+c949dVXY6uttnJ4tsBviVmzZsUjjzwSyy23XKRTqbp39991gcvdJbtmBDRnZX/88cfjjDPOiIceeqhZyy699NKYPHlys3lLPkm367j66qvjH//4RzzzzDPx29/+Nvbee+8W21pyPc/rXyD9ZzVmzJi45ZZb6r8zetCmQLrN1mWXXRbPP/98drutRx99tM1lvVC/Aul3/f7775/9Hr/xxhvjlFNOqd/OaDmBNgT8SdUGzLKcvdJKK8WFF14Y6b6ObY1ezp07N15//fVYffXVm/1lvO6668YJJ5xQav59990X559/fhZMBw4cmM1va93p06fHpEmTYrXVVmt2gUO63UvaV/oLfOWVVy5t24N8CKRR81NPPTVSfZtqnI+WacXSFEh/VKZgctVVV2WbXX/99eO6666LLbbYYmnuxrZyIHDPPffEXnvtFfvtt192G7099tgjOzL2kY98JAet0wQCS0dAAF06jkt1K5tuuml2/7cf/ehHcfrpp7fY9k9+8pNIN6MeNGhQ9h9SCqtrr712i+XSjHQof+zYsTF+/PjYbrvtoq110yH+yy+/PNZZZ534+9//HkceeWTsvPPOkULp8ccfH/Pmzcuupk+vn3vuudHQ0NDq/sysvcDMmTPjtNNOyz5w4Pbbb699A+yxJgIf//jH42c/+1lpX9OmTYs08m0qnsC+++5b6tSTTz6ZhdB09wMTgSIJOASf02oec8wx2SdgpKC5+PTAAw9EGtX85S9/GT/96U9jn332iXSIpr1p2LBh8corr0R76/7+97+PI444Is4777xsxDQFzzTde++9sd5668UVV1wR1157bRZE00iMKT8CG264YWy00Ub5aZCWVEUgndfddEuet956KxsJ/drXvlaVfdloPgTOPPPMSJ9ml+rstlv5qIlWLD0BAXTpWS7VLaVD7yeeeGL84Ac/iPfee6+07WeffTa22Wab6N27dzZvxx13jD/+8Y9ZMCwttMSD2bNnZ/9xtbfubrvtlo1spnPM0nJp9DNNKexOnDgxzjnnnCyYTpkyJe6///7sNf8QIFB7gXSx4be+9a045JBDsguRat8Ce6yVQPooznSaRfoozvS72ESgSAIOwee4mulq5s033zwuuuiiUivTYZgXX3yx9HzOnDmRvtLoSGvTBx98EC+88EL2n1X6WLe21v3MZz4TW2+9dXbB0l133ZVdwNT0+fHpHLORI0eWNt/WeamlBTwgQKAqAs8991x2QUoaFdt+++2rsg8bXfYCaRBglVVWieWXXz47z3/UqFGRLlBd8u4oy76lWkCg8wKtp5bOb8+aS1ng29/+dqRzgN55551sy+kXUbo1RxqJTNOdd94Zw4cPbxFA0+e/v/nmm9nFTGuuuWZ2QVN766aLWNIvvTQSetJJJ8Ubb7yRjaqmEdb/9//+X6QLHtKnclxzzTWR/hM0ESBQW4G33347vvOd70Q6LCt81ta+1nt77LHH4uc//3m223Se71/+8pdIF5iaCBRJwAhozqvZdCj+5JNPzlq6wgorxO677x7pJPX013G/fv2yw+NN3UjnjH7qU5/KLhJKFyml0ct0FXya2ls3bS+NtP7iF7/ILmw66qijsqvemw7xf/nLX84uekof9fjpT3+6aXe+EyBQI4Ebbrghpk6dGumP0qZpyJAh2dGKpue+F0Mg/b694IIL4tBDD80uQEoXkKYr4U0EiiTgozjrtJrpVkrpL+POHA5vb910vmkKtUse0n///fezQNqrV686FdNsAgQI1JdAusNFOt9/yd/H9dULrSXQuoAA2rqLuQQIECBAgAABAlUScA5olWBtlgABAgQIECBAoHUBAbR1F3MJECBAgAABAgSqJCCAVgnWZgkQIECAAAECBFoXEEBbdzGXAAECBAgQIECgSgICaJVgbZYAgc4LTJo0KdKnwMyYMaPzG7EmAQIECORWwFXwuS2NhhHougJPP/10bLzxxtkHIqRPhDERIECAQLEEjIAWq556Q4AAAQIECBDIvYBPQsp9iTSQQPEF5syZEz/72c/i7rvvjtVWWy0+97nPtej0n//857jsssvi9ddfj49//ONxwgknRPqY2TSlTwi68MILI32E4eDBg2PnnXeOww47LPtEsPR6+oCF73//+9nnaa+44opx8MEHx0477ZReMhEgQIDAMhAwAroM0O2SAIHmAt/85jfj7LPPjm222SZSGN1///2bLfC73/0u0scRTps2Lfbaa6946KGHYqONNoqXXnopW+6AAw6I++67L/bbb7/YfPPN48QTTyx9BG36FK9PfOITcccdd8See+6ZfaJX+jjbq666qtk+PCFAgACB2gk4B7R21vZEgEArAuPHj8/O93zmmWeykc20yA9/+MM4/vjjS+eADh06NLbddttmoTHN23rrreOaa66J9Jno5513XnzjG9/I9nDbbbdln6GdAmeaf84558TEiRNj4MCB2etp3tixY7PtNzQ0ZPP8Q4AAAQK1E3AIvnbW9kSAQCsCTz31VKy88sql8JkW2XXXXbMAmh5PmTIlJkyYEOeee256WprSYfq77rore37QQQfFkUcemQXUz372s9lI5wYbbJC99uijj0a6kCmFzqYphdF0pf1rr71WOozf9JrvBAgQIFB9AYfgq29sDwQItCOQzt9csGBBLFy4sLRU9+7/+ds4vZ6m1VdfvfR6epBC6/z587N5F110Udxyyy2x/vrrx8UXXxwbbrhhnHzyydlrKcD27ds3GhsbS1/p3NFTTjkle54t5B8CBAgQqKnAf37L13S3dkaAAIFFAptuumm89dZbkUZCN9lkk2zmPffcU+JZa621omfPnnHnnXfGpz71qdL8NPqZbtU0c+bMuP5SBy/fAAAB5klEQVT667MLl9KoaAqzZ511VnbYfcyYMbHuuuvGuHHjsnNMUwhN04svvpidR5ouSDIRIECAQO0FjIDW3tweCRBYTGCzzTaLdLj8e9/7XnZIPJ0Tmq6Ib5q6desWo0ePjquvvjpuv/32+OCDD+Lyyy+Phx9+OL7yla9Enz594r//+7+zEc80Wppenzx5cjZi2rt37+y80HSoPd3YPo2GvvHGG9lFTuk80RRsTQQIECBQewEBtPbm9kiAwGICKSSmMJhur5RGK7fYYotI53EuPqXzN9OtlfbYY4/sNksprP74xz+OfffdN7vV0iWXXJKNaqbD9OmCpD/84Q/xm9/8JttEuir+17/+dfz0pz+NVVddNYYNG5aF07S+iQABAgSWjYCr4JeNu70SINCKQBq57N+/f6RQ2to0e/bsbHRzjTXWaO3l7KM70whoW4fW08VH6TUjn63ymUmAAIGaCQigNaO2IwIECBAgQIAAgSTgELz3AQECBAgQIECAQE0FBNCactsZAQIECBAgQICAAOo9QIAAAQIECBAgUFMBAbSm3HZGgAABAgQIECAggHoPECBAgAABAgQI1FRAAK0pt50RIECAAAECBAgIoN4DBAgQIECAAAECNRUQQGvKbWcECBAgQIAAAQL/HyMy1RMYTeRzAAAAAElFTkSuQmCC" /><!-- --></p>
 </div>
 <div id="a-more-complex-example" class="section level2">
 <h2>A more complex example</h2>
 <p>Let us consider now a model-based dose-finding approach in the same
-scenario. We will investogate a CRM design, using the model from the
+scenario. We will investigate a CRM design, using the model from the
 <code>dfcrm</code> package. Let us say that we are targeting a 25%
 toxicity rate:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="fl">0.25</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="fl">0.25</span></span></code></pre></div>
 <p>and that our prior beliefs on the toxicity rates can be represented
 by:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>skeleton <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>skeleton <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>)</span></code></pre></div>
 <p>i.e. we believe the third dose is the dose we seek.</p>
 <p>The CRM design as provided by <code>dfcrm</code> offers no native
 stopping behaviour. Let us say we are willing to use up to 12 patients.
 How does performance of this simple design compare to the 3+3 above?</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>sims</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.00   0.24   0.50   0.18   0.06   0.02 </span></span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5 </span></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.485 0.225 0.115 0.160 0.015 </span></span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      12      12      12      12      12      12 </span></span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    0.00    3.00    3.00    3.22    4.00    5.00 </span></span>
-<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    5.70    9.85   11.60   12.03   14.12   21.20</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>sims</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 20 </span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="co">#&gt;   0.00   0.15   0.45   0.30   0.10   0.00 </span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a><span class="co">#&gt;      1      2      3      4      5 </span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="co">#&gt; 0.4000 0.2375 0.1375 0.1875 0.0375 </span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a><span class="co">#&gt;      12      12      12      12      12      12 </span></span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a><span class="co">#&gt;     2.0     3.0     3.0     3.4     4.0     5.0 </span></span>
+<span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb17-31"><a href="#cb17-31" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb17-32"><a href="#cb17-32" tabindex="-1"></a><span class="co">#&gt;    5.50   10.70   11.80   12.21   15.12   17.30</span></span></code></pre></div>
 <p>The first thing we note is that the CRM design is much less likely to
 select dose 1 and more likely to select dose 2. If we believe that
 efficacy is associated with toxicity (and we should if we are using the
-CRM approach), then this is a good thing.</p>
+CRM approach), then this is a good thing. Note, however, that comparing
+separate simulations is not the most efficient method to compare
+competing designs. A preferable method is to use
+<code>simulate_compare</code>, demonstrated below.</p>
 <p>However, our design has no method to stop if all doses are too toxic.
 We saw above that the 3+3 design occasionally recommended no dose. Thus,
 when comparing this CRM design to the 3+3, we are not comparing like
 with like. It is simple to add a stopping behaviour for excess
 toxicity:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>sims</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      0      0      0      0      0 </span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      2      3      4      5 </span></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.4264 0.1929 0.1574 0.1980 0.0254 </span></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    3.00   12.00   12.00   11.82   12.00   12.00 </span></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1.00    3.00    3.00    3.34    4.00    6.00 </span></span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2.600   8.825  10.800  11.898  14.575  22.400</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>sims</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 20 </span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a><span class="co">#&gt;   0.00   0.15   0.50   0.10   0.20   0.05 </span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5 </span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a><span class="co">#&gt; 0.438 0.163 0.138 0.212 0.050 </span></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a><span class="co">#&gt;      12      12      12      12      12      12 </span></span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a><span class="co">#&gt;    2.00    2.00    3.00    3.15    4.00    5.00 </span></span>
+<span id="cb18-30"><a href="#cb18-30" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-31"><a href="#cb18-31" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb18-32"><a href="#cb18-32" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb18-33"><a href="#cb18-33" tabindex="-1"></a><span class="co">#&gt;    7.60   10.15   12.65   13.12   16.70   19.80</span></span></code></pre></div>
 <p>We now see some trial iterations that stop and recommend <em>no
 dose</em> for further study. We cannot see from this scenario whether
 this design stops frequently enough because an appropriate decision in
@@ -675,57 +698,59 @@ this scenario is to select one of the lowest two doses. We will research
 a scenario where all doses are too toxic below.</p>
 <p>Given the fixed sample size, how many are treated at the dose that is
 eventually recommended</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      NA      NA      NA     NaN      NA      NA      50</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt;    0.00    3.00    3.00    4.05    6.00   12.00</span></span></code></pre></div>
 <p>Similar to the 3+3 design, this CRM design treats 3-4 at the
 recommended dose. We might want to ensure that there are at least 6
 patients at the recommended dose. How would that affect the operating
 characteristics?</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">demand_n_at_dose</span>(<span class="at">n =</span> <span class="dv">6</span>, <span class="at">dose =</span> <span class="st">&#39;recommended&#39;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="fu">demand_n_at_dose</span>(<span class="at">n =</span> <span class="dv">6</span>, <span class="at">dose =</span> <span class="st">&#39;recommended&#39;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
 <p>As required, there are now at least 6 patients at the recommended
 dose:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      NA      NA      NA     NaN      NA      NA      50</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">n_at_recommended_dose</span>(sims))</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="co">#&gt;     6.0     6.0     6.0     6.9     6.0    12.0</span></span></code></pre></div>
 <p>So how does this affect the expected overall sample size?</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sims</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 50 </span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      0      0      0      0      0 </span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5 </span></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.545 0.175 0.100 0.155 0.025 </span></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      12      12      12      12      12      12 </span></span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     2.0     3.0     3.0     3.3     4.0     5.0 </span></span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    5.90    9.05   11.45   11.64   13.18   19.30</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>sims</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="co">#&gt; Number of iterations: 20 </span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co">#&gt; Number of doses: 5 </span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="co">#&gt; True probability of toxicity:</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co">#&gt;    1    2    3    4    5 </span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="co">#&gt; 0.12 0.27 0.44 0.53 0.57 </span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="co">#&gt; Probability of recommendation:</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="co">#&gt;   0.00   0.20   0.45   0.25   0.10   0.00 </span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="co">#&gt; Probability of administration:</span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a><span class="co">#&gt;      1      2      3      4      5 </span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a><span class="co">#&gt; 0.4149 0.2553 0.1596 0.1596 0.0106 </span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="co">#&gt; Sample size:</span></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#&gt;    12.0    12.0    15.0    14.1    15.0    18.0 </span></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a><span class="co">#&gt; Total toxicities:</span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt;     2.0     3.0     4.0     3.6     4.0     6.0 </span></span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="co">#&gt; Trial duration:</span></span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a><span class="co">#&gt;    8.20   11.07   12.50   13.68   16.30   21.70</span></span></code></pre></div>
 <p>Pleasingly, the expected sample size only increases by about 3
 patients. Obviously, the maximum increases by 6 patients.</p>
 </div>
 <div id="further-refinements" class="section level2">
 <h2>Further refinements</h2>
+<p>The following behaviours apply to both <code>simulate_trials</code>
+and <code>simulate_compare</code>.</p>
 <div id="cohort-size" class="section level3">
 <h3>Cohort size</h3>
 <p>All of the above simulations assume that patients are evaluated in
@@ -737,16 +762,16 @@ by providing a custom function via the
 the model to recommend a new dose after every other patient, we can
 specify that the <code>sample_patient_arrivals</code> function samples
 patients in cohorts of two:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>patient_arrivals_func <span class="ot">&lt;-</span> <span class="cf">function</span>(current_data) <span class="fu">cohorts_of_n</span>(<span class="at">n =</span> <span class="dv">2</span>)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">demand_n_at_dose</span>(<span class="at">n =</span> <span class="dv">6</span>, <span class="at">dose =</span> <span class="st">&#39;recommended&#39;</span>)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">sample_patient_arrivals =</span> patient_arrivals_func)</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>patient_arrivals_func <span class="ot">&lt;-</span> <span class="cf">function</span>(current_data) <span class="fu">cohorts_of_n</span>(<span class="at">n =</span> <span class="dv">2</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="fu">stop_when_too_toxic</span>(<span class="at">dose =</span> <span class="dv">1</span>, <span class="at">tox_threshold =</span> <span class="fl">0.35</span>, <span class="at">confidence =</span> <span class="fl">0.8</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="fu">demand_n_at_dose</span>(<span class="at">n =</span> <span class="dv">6</span>, <span class="at">dose =</span> <span class="st">&#39;recommended&#39;</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>                  <span class="at">sample_patient_arrivals =</span> patient_arrivals_func)</span></code></pre></div>
 <p>The <code>sample_patient_arrivals</code> function samples the arrival
 times of new patients for the next interim analysis. The new patients
 will be added to the existing patients and the model will be fit to the
@@ -761,15 +786,15 @@ sampling function to be adaptive. The function should return a
 data-frame with a row for each new patient and a column for
 <code>time_delta</code>, the time between the arrival of this patient
 and the previous, like the <code>cohorts_of_n</code> function does:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cohorts_of_n</span>(<span class="at">n =</span> <span class="dv">5</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 1</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   time_delta</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        &lt;dbl&gt;</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1        0.4</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        2.1</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3        1.4</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4        1.2</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5        0.7</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">cohorts_of_n</span>(<span class="at">n =</span> <span class="dv">5</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 1</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="co">#&gt;   time_delta</span></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="co">#&gt;        &lt;dbl&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="co">#&gt; 1        2.2</span></span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="co">#&gt; 2        0.7</span></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="co">#&gt; 3        0.1</span></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="co">#&gt; 4        0.1</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="co">#&gt; 5        0.5</span></span></code></pre></div>
 </div>
 <div id="sampling-the-conclusion-of-partly-observed-trials" class="section level3">
 <h3>Sampling the conclusion of partly-observed trials</h3>
@@ -782,36 +807,36 @@ simulated trial will commence from those outcomes seen thus far.</p>
 <p>For example, let us say that we have observed the first cohort of
 three already at dose 1, yielding one toxicities and two
 non-toxicities.</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NTN&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NTN&#39;</span>)</span></code></pre></div>
 <p>The appearance of an early toxicity at dose 1 appear to make it more
 likely that a low dose will be recommended, as we might expect:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      0      0      0      0      0</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a><span class="co">#&gt;   0.00   0.40   0.55   0.05   0.00   0.00</span></span></code></pre></div>
 <p>The <code>previous_outcomes</code> can be described by the outcome
 string method demonstrated above. They can also be provided via a
 data-frame, with the following columns:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>previous_outcomes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">patient =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>),</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">tox =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">previous_outcomes =</span> previous_outcomes)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>previous_outcomes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>  <span class="at">patient =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>  <span class="at">tox =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>  <span class="at">dose =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>)</span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>                  <span class="at">previous_outcomes =</span> previous_outcomes)</span></code></pre></div>
 <p>We have just described the trial starting point in two different
 ways. The simulated iterations should produce exactly the same
 results:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      1      0      0      0      0      0</span></span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5 </span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a><span class="co">#&gt;   0.00   0.40   0.55   0.05   0.00   0.00</span></span></code></pre></div>
 </div>
 <div id="next-dose" class="section level3">
 <h3>Next dose</h3>
@@ -819,9 +844,9 @@ results:</p>
 cohort of patients by specifying the <code>next_dose</code> parameter.
 For example, if we want to commence our simulations at dose 5, we would
 run:</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_trials, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">next_dose =</span> <span class="dv">5</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_trials, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>                  <span class="at">next_dose =</span> <span class="dv">5</span>)</span></code></pre></div>
 <p>If omitted, the next dose is calculated by invoking the model on the
 prevailing outcomes, a set that may well be empty. In this setting, most
 models would opt to start at dose 1 but this may vary by method.</p>
@@ -836,34 +861,32 @@ cause the executing machine to run out of memory. However, you can force
 this function to retain all model fits by specifying
 <code>return_all_fits = TRUE</code>.</p>
 <p>For example:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_three_plus_three</span>(<span class="at">num_doses =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">return_all_fits =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_three_plus_three</span>(<span class="at">num_doses =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>                  <span class="at">return_all_fits =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>We can verify that there are now many analyses per trial:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(sims<span class="sc">$</span>fits, length)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] 3 3 6 4 4 4 4 6 5 2 4 4 3 5 5 5 4 5 4 3 5 3 6 4 3 3 5 5 5 7 5 3 6 4 4 3 4 5</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [39] 5 4 5 5 5 4 6 6 3 5 3 5</span></span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">sapply</span>(sims<span class="sc">$</span>fits, length)</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="co">#&gt;  [1] 6 6 4 6 4 5 4 5 5 6 5 5 4 8 5 6 3 4 3 4</span></span></code></pre></div>
 <p>The multiple fits within a single simulated trial are distinguishable
 in <code>tibble</code> view via the <code>.depth</code> column:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">12</span>)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 12 × 12</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    .iteration .depth  time dose     tox     n empiric_…¹ mean_…² media…³ admis…⁴</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;lgl&gt;  </span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1          1      1   0   NoDose     0     0          0       0       0 TRUE   </span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2          1      1   0   1          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3          1      1   0   2          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4          1      1   0   3          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5          1      1   0   4          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6          1      1   0   5          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7          1      2   3.3 NoDose     0     0          0       0       0 TRUE   </span></span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8          1      2   3.3 1          0     3          0      NA      NA TRUE   </span></span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9          1      2   3.3 2          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10          1      2   3.3 3          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11          1      2   3.3 4          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12          1      2   3.3 5          0     0        NaN      NA      NA TRUE   </span></span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 2 more variables: recommended &lt;lgl&gt;, true_prob_tox &lt;dbl&gt;, and</span></span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   abbreviated variable names ¹​empiric_tox_rate, ²​mean_prob_tox,</span></span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; #   ³​median_prob_tox, ⁴​admissible</span></span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">as_tibble</span>(sims) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">12</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 12 × 12</span></span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a><span class="co">#&gt;    .iteration .depth  time dose     tox     n empiric_tox_rate mean_prob_tox</span></span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a><span class="co">#&gt;         &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;</span></span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a><span class="co">#&gt;  1          1      1   0   NoDose     0     0                0             0</span></span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a><span class="co">#&gt;  2          1      1   0   1          0     0              NaN            NA</span></span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a><span class="co">#&gt;  3          1      1   0   2          0     0              NaN            NA</span></span>
+<span id="cb32-8"><a href="#cb32-8" tabindex="-1"></a><span class="co">#&gt;  4          1      1   0   3          0     0              NaN            NA</span></span>
+<span id="cb32-9"><a href="#cb32-9" tabindex="-1"></a><span class="co">#&gt;  5          1      1   0   4          0     0              NaN            NA</span></span>
+<span id="cb32-10"><a href="#cb32-10" tabindex="-1"></a><span class="co">#&gt;  6          1      1   0   5          0     0              NaN            NA</span></span>
+<span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a><span class="co">#&gt;  7          1      2   1.7 NoDose     0     0                0             0</span></span>
+<span id="cb32-12"><a href="#cb32-12" tabindex="-1"></a><span class="co">#&gt;  8          1      2   1.7 1          0     3                0            NA</span></span>
+<span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a><span class="co">#&gt;  9          1      2   1.7 2          0     0              NaN            NA</span></span>
+<span id="cb32-14"><a href="#cb32-14" tabindex="-1"></a><span class="co">#&gt; 10          1      2   1.7 3          0     0              NaN            NA</span></span>
+<span id="cb32-15"><a href="#cb32-15" tabindex="-1"></a><span class="co">#&gt; 11          1      2   1.7 4          0     0              NaN            NA</span></span>
+<span id="cb32-16"><a href="#cb32-16" tabindex="-1"></a><span class="co">#&gt; 12          1      2   1.7 5          0     0              NaN            NA</span></span>
+<span id="cb32-17"><a href="#cb32-17" tabindex="-1"></a><span class="co">#&gt; # ℹ 4 more variables: median_prob_tox &lt;dbl&gt;, admissible &lt;lgl&gt;,</span></span>
+<span id="cb32-18"><a href="#cb32-18" tabindex="-1"></a><span class="co">#&gt; #   recommended &lt;lgl&gt;, true_prob_tox &lt;dbl&gt;</span></span></code></pre></div>
 <p>In contrast to the previous usage of <code>as_tibble(sims)</code>, we
 see that there are now model fits at multiple fits within each simulated
 trial <code>.iteration</code>. The rows at <code>.depth == 1</code>
@@ -885,12 +908,12 @@ decision. To breach this limit, specify
 <code>i_like_big_trials = TRUE</code> in the function call. However,
 when you forego the safety net, the onus is on you to write selectors
 that will eventually stop the trial, so be careful!</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">99</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> <span class="dv">1</span>, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">i_like_big_trials =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">num_patients</span>(sims)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 99</span></span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">get_dfcrm</span>(<span class="at">skeleton =</span> skeleton, <span class="at">target =</span> target) <span class="sc">%&gt;%</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">99</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> <span class="dv">1</span>, <span class="at">true_prob_tox =</span> true_prob_tox,</span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>                  <span class="at">i_like_big_trials =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">num_patients</span>(sims)</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a><span class="co">#&gt; [1] 99</span></span></code></pre></div>
 </div>
 </div>
 </div>
