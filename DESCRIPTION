@@ -1,8 +1,8 @@
 Package: escalation
 Type: Package
 Title: A Modular Approach to Dose-Finding Clinical Trials
-Version: 0.1.8
-Date: 2024-02-23
+Version: 0.1.9
+Date: 2024-05-14
 Authors@R: c(
     person("Kristian", "Brock", 
       email = "kristian.brock@gmail.com", 
@@ -44,14 +44,17 @@ Encoding: UTF-8
 Depends: magrittr
 Imports: dplyr, tidyr (>= 1.0), tidyselect, stringr, purrr, tibble,
         ggplot2, gtools, dfcrm, BOIN, trialr (>= 0.1.5), DiagrammeR,
-        RColorBrewer, viridis, binom, R6, mvtnorm
+        RColorBrewer, viridis, binom, R6, mvtnorm, testthat
 RoxygenNote: 7.2.3
-Suggests: testthat, knitr, rmarkdown, covr
+URL: https://brockk.github.io/escalation/,
+        https://github.com/brockk/escalation
+BugReports: https://github.com/brockk/escalation/issues
+Suggests: knitr, rmarkdown, covr
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2024-02-23 14:47:17 UTC; kristian
+Packaged: 2024-05-22 15:29:04 UTC; kristian
 Author: Kristian Brock [aut, cre] (<https://orcid.org/0000-0002-3921-0166>),
   Daniel Slade [aut] (<https://orcid.org/0000-0001-6063-1283>),
   Michael Sweeting [aut] (<https://orcid.org/0000-0003-0980-8956>)
 Repository: CRAN
-Date/Publication: 2024-02-23 16:50:02 UTC
+Date/Publication: 2024-05-22 17:10:03 UTC

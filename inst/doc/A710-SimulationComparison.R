@@ -30,6 +30,9 @@ sims <- simulate_compare(
   true_prob_tox = true_prob_tox
 )
 
+## -----------------------------------------------------------------------------
+summary(sims)
+
 ## ---- fig.width=7, fig.height=5-----------------------------------------------
 convergence_plot(sims)
 

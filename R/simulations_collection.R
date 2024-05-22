@@ -13,9 +13,9 @@
 #' @export
 #'
 #' @references
-#' Sweeting, M., Slade, D., Jackson, D., & Brock, K. (2023).
+#' Sweeting, M., Slade, D., Jackson, D., & Brock, K. (2024).
 #' Potential outcome simulation for efficient head-to-head comparison of
-#' adaptive dose-finding designs. Preprint.
+#' adaptive dose-finding designs. arXiv preprint arXiv:2402.15460
 simulations_collection <- function(sim_map) {
   class(sim_map) <- c("simulations_collection", class(sim_map))
   return(sim_map)
@@ -109,4 +109,19 @@ as_tibble.simulations_collection <- function(x, target_dose = NULL,
     ) %>%
     ungroup() %>%
     as_tibble(...)
+}
+
+#' @importFrom purrr imap reduce
+#' @importFrom dplyr bind_rows mutate
+#' @importFrom magrittr %>%
+#' @export
+summary.simulations_collection <- function(object, ...) {
+  imap(
+    object,
+    .f = function(sims, label) {
+      summary(sims) %>%
+        mutate(design = label)
+    }
+  ) %>%
+    reduce(bind_rows)
 }
