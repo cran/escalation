@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
 
 options(rmarkdown.html_vignette.check_title = FALSE)
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(escalation)
 
 model <- get_tpi(num_doses = 5, target = 0.3, alpha = 0.005, beta = 0.005, 
@@ -36,7 +36,16 @@ fit %>% prob_tox_exceeds(threshold = 0.25)
 ## -----------------------------------------------------------------------------
 fit %>% dose_admissible()
 
-## ---- message=FALSE-----------------------------------------------------------
+## -----------------------------------------------------------------------------
+model <- get_tpi(num_doses = 5, target = 0.25, k1 = 1, k2 = 1.5, 
+                 exclusion_certainty = 0.95) %>%
+  stop_at_n(n = 12) %>%
+  select_tpi_mtd(exclusion_certainty = 0.95)
+
+outcomes <- '1NNN 2NTN 2NNN 3NTT'
+model %>% fit(outcomes) %>% recommended_dose()
+
+## ----message=FALSE------------------------------------------------------------
 paths <- model %>% get_dose_paths(cohort_sizes = c(3), next_dose = 2)
 
 library(dplyr)

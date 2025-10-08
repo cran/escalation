@@ -1,11 +1,11 @@
 ---
-title: "Neuenschwander, Branson & Gsponer"
+title: "NBG - Neuenschwander, Branson & Gsponer"
 output: 
   rmarkdown::html_vignette:
     df_print: tibble
 bibliography: library.bib
 vignette: >
-  %\VignetteIndexEntry{Neuenschwander, Branson & Gsponer}
+  %\VignetteIndexEntry{NBG - Neuenschwander, Branson & Gsponer}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

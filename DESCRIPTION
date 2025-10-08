@@ -1,8 +1,8 @@
 Package: escalation
 Type: Package
 Title: A Modular Approach to Dose-Finding Clinical Trials
-Version: 0.1.10
-Date: 2024-06-26
+Version: 0.2.3
+Date: 2025-10-08
 Authors@R: c(
     person("Kristian", "Brock", 
       email = "kristian.brock@gmail.com", 
@@ -16,8 +16,16 @@ Authors@R: c(
     person("Michael", "Sweeting", 
       role = c("aut"), 
       comment = c(ORCID = "0000-0003-0980-8965")
+    ),
+    person("Conor", "Norris", 
+      role = c("ctb"),
+      comment = c(ORCID = "0009-0009-8850-0811")
+    ),
+    person("Bharat", "Bhushan", 
+      role = c("ctb"),
+      comment = c(ORCID = "0009-0001-5271-7113")
     )
-    )
+  )
 Maintainer: Kristian Brock <kristian.brock@gmail.com>
 Description: Methods for working with dose-finding clinical trials. We provide 
     implementations of many dose-finding clinical trial designs, including the 
@@ -44,17 +52,21 @@ Encoding: UTF-8
 Depends: magrittr
 Imports: dplyr, tidyr (>= 1.0), tidyselect, stringr, purrr, tibble,
         ggplot2, gtools, dfcrm, BOIN, trialr (>= 0.1.5), DiagrammeR,
-        RColorBrewer, viridis, binom, R6, mvtnorm, testthat
-RoxygenNote: 7.2.3
+        RColorBrewer, viridis, binom, R6, mvtnorm, graphics, Iso,
+        testthat
+RoxygenNote: 7.3.2
 URL: https://brockk.github.io/escalation/,
         https://github.com/brockk/escalation
 BugReports: https://github.com/brockk/escalation/issues
 Suggests: knitr, rmarkdown, covr
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2024-06-27 07:49:18 UTC; kristian
-Author: Kristian Brock [aut, cre] (<https://orcid.org/0000-0002-3921-0166>),
-  Daniel Slade [aut] (<https://orcid.org/0000-0001-6063-1283>),
-  Michael Sweeting [aut] (<https://orcid.org/0000-0003-0980-8965>)
+Packaged: 2025-10-08 13:36:47 UTC; kristian
+Author: Kristian Brock [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-3921-0166>),
+  Daniel Slade [aut] (ORCID: <https://orcid.org/0000-0001-6063-1283>),
+  Michael Sweeting [aut] (ORCID: <https://orcid.org/0000-0003-0980-8965>),
+  Conor Norris [ctb] (ORCID: <https://orcid.org/0009-0009-8850-0811>),
+  Bharat Bhushan [ctb] (ORCID: <https://orcid.org/0009-0001-5271-7113>)
 Repository: CRAN
-Date/Publication: 2024-06-27 11:50:07 UTC
+Date/Publication: 2025-10-08 14:40:14 UTC

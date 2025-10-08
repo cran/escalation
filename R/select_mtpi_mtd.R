@@ -1,29 +1,32 @@
 
 #' Select dose by mTPI's MTD-choosing algorithm.
 #'
-#' This method selects dose by the algorithm for identifying the maximum
-#' tolerable dose (MTD) described in Ji et al. (2010). This class is intended
-#' to be used when a mTPI trial has reached its maximum sample size. Thus, it
-#' intends to make the final dose recommendation after the regular mTPI dose
-#' selection algorithm, as implemented by \code{\link{get_mtpi}}, including any
-#' additional behaviours that govern stopping (etc), has gracefully concluded a
-#' dose-finding trial. However, the class can be used in any scenario where
-#' there is a target toxicity rate. See Examples. Note - this class will not
-#' override the parent dose selector when the parent is advocating no dose. Thus
-#' this class will not reinstate a dangerous dose.
+#' Note: if you use this selector, it almost certainly needs to be the last
+#' example in the chain - see Example below. This method selects dose by the
+#' algorithm for identifying the maximum tolerable dose (MTD) described in Ji et
+#' al. (2010). This class is intended to be used when a mTPI trial has reached
+#' its maximum sample size. Thus, it intends to make the final dose
+#' recommendation after the regular mTPI dose selection algorithm, as
+#' implemented by \code{\link{get_mtpi}}, including any additional behaviours
+#' that govern stopping (etc), has gracefully concluded a dose-finding trial.
+#' However, the class can be used in any scenario where there is a target
+#' toxicity rate. See Examples. Note - this class will not override the parent
+#' dose selector when the parent is advocating no dose. Thus this class will not
+#' reinstate a dangerous dose.
 #'
 #' @inheritParams get_mtpi
+#' @inheritParams select_tpi_mtd
 #' @param parent_selector_factory Object of type \code{\link{selector_factory}}.
 #' @param when Either of: 'finally' to select dose only when the parent
-#' dose-selector has finished, by returning continue() == FALSE; or 'always'
-#' to use this dose-selection algorithm for every dose decision. As per the
-#' authors' original intentions, the default is 'finally'.
+#'   dose-selector has finished, by returning continue() == FALSE; or 'always'
+#'   to use this dose-selection algorithm for every dose decision. As per the
+#'   authors' original intentions, the default is 'finally'.
 #' @param target We seek a dose with this probability of toxicity. If not
-#' provided, the value will be sought from the parent dose-selector.
+#'   provided, the value will be sought from the parent dose-selector.
 #' @param alpha First shape parameter of the beta prior distribution on the
-#' probability of toxicity.
+#'   probability of toxicity.
 #' @param beta Second shape parameter of the beta prior distribution on the
-#' probability of toxicity.
+#'   probability of toxicity.
 #' @param ... Extra args are passed onwards.
 #'
 #' @return an object of type \code{\link{selector_factory}}.
@@ -58,19 +61,18 @@
 #' model3 %>% fit('1NNT') %>% recommended_dose()
 #' model3 %>% fit('1NNN 2NNT') %>% recommended_dose()
 #'
-#' @references
-#' Ji, Y., Liu, P., Li, Y., & Bekele, B. N. (2010).
-#'  A modified toxicity probability interval method for dose-finding trials.
-#'  Clinical Trials, 7(6), 653-663. https://doi.org/10.1177/1740774510382799
+#' @references Ji, Y., Liu, P., Li, Y., & Bekele, B. N. (2010). A modified
+#' toxicity probability interval method for dose-finding trials. Clinical
+#' Trials, 7(6), 653-663. https://doi.org/10.1177/1740774510382799
 #'
-#' Ji, Y., & Yang, S. (2017).
-#' On the Interval-Based Dose-Finding Designs, 1-26.
+#' Ji, Y., & Yang, S. (2017). On the Interval-Based Dose-Finding Designs, 1-26.
 #' Retrieved from https://arxiv.org/abs/1706.03277
 select_mtpi_mtd <- function(parent_selector_factory,
                             when = c('finally', 'always'),
                             target = NULL,
                             exclusion_certainty,
                             alpha = 1, beta = 1,
+                            pava_just_tested_doses = FALSE,
                             ...) {
 
   when <- match.arg(when)
@@ -82,6 +84,7 @@ select_mtpi_mtd <- function(parent_selector_factory,
     exclusion_certainty = exclusion_certainty,
     alpha = alpha,
     beta = beta,
+    pava_just_tested_doses = pava_just_tested_doses,
     extra_args = list(...)
   )
   class(x) <- c('mtpi_mtd_dose_selector_factory',
@@ -95,6 +98,7 @@ mtpi_mtd_dose_selector <- function(parent_selector,
                                    target = NULL,
                                    exclusion_certainty,
                                    alpha, beta,
+                                   pava_just_tested_doses,
                                    ...) {
 
   when <- match.arg(when)
@@ -113,7 +117,8 @@ mtpi_mtd_dose_selector <- function(parent_selector,
     target = target,
     exclusion_certainty = exclusion_certainty,
     alpha = alpha,
-    beta = beta
+    beta = beta,
+    pava_just_tested_doses = pava_just_tested_doses
   )
 
   class(l) = c('mtpi_mtd_dose_selector',
@@ -137,7 +142,8 @@ fit.mtpi_mtd_dose_selector_factory <- function(selector_factory, outcomes,
     target = selector_factory$target,
     exclusion_certainty = selector_factory$exclusion_certainty,
     alpha = selector_factory$alpha,
-    beta = selector_factory$beta
+    beta = selector_factory$beta,
+    pava_just_tested_doses = selector_factory$pava_just_tested_doses
   )
   do.call(mtpi_mtd_dose_selector, args = args)
 }
@@ -150,13 +156,28 @@ mean_prob_tox.mtpi_mtd_dose_selector <- function(x, ...) {
   post_mean = (x$alpha + tox_at_dose(x)) / (x$alpha + x$beta + n_at_dose(x))
   post_var = (x$alpha + tox_at_dose(x)) *
     (x$beta + n_at_dose(x) - tox_at_dose(x)) /
-    ((x$alpha + x$beta + n_at_dose(x))^2 * (x$alpha + x$beta + n_at_dose(x) + 1))
-  post_mean = pava(post_mean, wt = 1 / post_var)
-  return(post_mean)
+    ((x$alpha + x$beta + n_at_dose(x))^2 *
+       (x$alpha + x$beta + n_at_dose(x) + 1))
+  tested <- n_at_dose(x) > 0
+  if(x$pava_just_tested_doses & sum(tested) > 0) {
+    # Apply PAVA only to tested doses
+    tested_post_mean <- post_mean[tested]
+    tested_post_var <- post_var[tested]
+    tested_post_mean <- pava(tested_post_mean, wt = 1 / tested_post_var)
+    to_return <- post_mean # Mimic shape
+    to_return[!tested] <- NA
+    to_return[tested] <- tested_post_mean
+    return(to_return)
+  } else {
+    # Apply PAVA to all doses
+    post_mean = pava(post_mean, wt = 1 / post_var)
+    return(post_mean)
+  }
 }
 
 #' @export
 prob_tox_exceeds.mtpi_mtd_dose_selector <- function(x, threshold, ...) {
+  # This routine uses only tested doses. Untested doses get NA.
   pava_bb_prob_tox_exceeds(x, threshold, alpha = x$alpha, beta = x$beta)
 }
 

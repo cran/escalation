@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -14,7 +14,7 @@ paths <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE) %>%
 ## -----------------------------------------------------------------------------
 paths
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths)
 }
@@ -27,7 +27,7 @@ target <- 0.25
 paths <- get_dfcrm(skeleton = skeleton, target = target) %>%
   get_dose_paths(cohort_sizes = c(3, 3))
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, viridis_palette = 'magma')
 }
@@ -37,12 +37,12 @@ paths <- get_dfcrm(skeleton = skeleton, target = target) %>%
   stop_when_too_toxic(dose = 1, tox_threshold = 0.35, confidence = 0.9) %>% 
   get_dose_paths(cohort_sizes = c(3, 3))
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, viridis_palette = 'inferno')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_boin(num_doses = 4, target = target) %>% 
   get_dose_paths(cohort_sizes = rep(2, 4))
 
@@ -50,7 +50,7 @@ if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, RColorBrewer_palette = 'YlOrRd')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_boin(num_doses = 4, target = target) %>% 
   get_dose_paths(cohort_sizes = c(3, 1, 2))
 
@@ -58,7 +58,7 @@ if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, RColorBrewer_palette = 'Blues')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_boin(num_doses = 4, target = target) %>% 
   get_dose_paths(cohort_sizes = rep(1, 4))
 
@@ -66,7 +66,7 @@ if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, RColorBrewer_palette = 'RdPu')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_boin(num_doses = 4, target = target) %>% 
   get_dose_paths(cohort_sizes = rep(3, 2), previous_outcomes = '1NNN 2TNT')
 
@@ -74,7 +74,7 @@ if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, viridis_palette = 'viridis')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_boin(num_doses = 4, target = target) %>% 
   get_dose_paths(cohort_sizes = rep(3, 2))
 
@@ -82,7 +82,7 @@ if(Sys.getenv("RSTUDIO") == "1") {
   graph_paths(paths, viridis_palette = 'viridis')
 }
 
-## ---- fig.width=7, fig.height=7-----------------------------------------------
+## ----fig.width=7, fig.height=7------------------------------------------------
 paths <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE) %>% 
   get_dose_paths(cohort_sizes = c(3, 3), next_dose = 3)
 

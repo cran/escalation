@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -32,11 +32,11 @@ fit2 <- model2 %>% fit(outcomes)
 ## -----------------------------------------------------------------------------
 fit2 %>% recommended_dose()
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 paths1 <- model %>% get_dose_paths(cohort_sizes = c(3, 3), next_dose = 2)
 graph_paths(paths1)
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 paths2 <- model2 %>% get_dose_paths(cohort_sizes = c(3, 3), next_dose = 2)
 graph_paths(paths2)
 

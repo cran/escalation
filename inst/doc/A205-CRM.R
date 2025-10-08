@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -13,7 +13,7 @@ target <- 0.25
 a0 <- 3
 beta_sd <- sqrt(1.34)
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(escalation)
 model1 <- get_dfcrm(skeleton = skeleton, target = target, model = 'logistic', 
                     intcpt = a0, scale = beta_sd)
@@ -101,7 +101,7 @@ fit7 %>%
   prob_tox_samples(tall = TRUE) %>% 
   head()
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 
@@ -112,7 +112,7 @@ fit7 %>%
   ggplot(aes(dose, prob_tox)) + 
   geom_line(aes(group = .draw), alpha = 0.2)
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 skeleton <- c(0.05, 0.12, 0.25, 0.40, 0.55)
 target <- 0.25
 beta_sd <- 1

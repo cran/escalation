@@ -1,11 +1,11 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7, fig.height = 5
 )
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(escalation)
 
 model <- get_boin(num_doses = 5, target = 0.3)
@@ -29,6 +29,14 @@ fit %>% recommended_dose()
 
 ## -----------------------------------------------------------------------------
 fit %>% dose_admissible()
+
+## -----------------------------------------------------------------------------
+model <- get_boin(num_doses = 5, target = 0.3) %>%
+   stop_at_n(n = 12) %>%
+   select_boin_mtd()
+
+outcomes <- '1NNN 2NTN 2NNN 3NTT'
+model %>% fit(outcomes) %>% recommended_dose()
 
 ## -----------------------------------------------------------------------------
 cohort_sizes <- c(3, 3)

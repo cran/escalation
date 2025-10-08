@@ -12,7 +12,7 @@
 
 
 
-<title>Neuenschwander, Branson &amp; Gsponer</title>
+<title>NBG - Neuenschwander, Branson &amp; Gsponer</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -27,6 +27,26 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
+<style type="text/css">@layer htmltools {
+.html-fill-container {
+display: flex;
+flex-direction: column;
+
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > .html-fill-item {
+
+flex: 1 1 auto;
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > :not(.html-fill-item) {
+
+flex: 0 0 auto;
+}
+}
+</style>
 <script>(function() {
   // If window.HTMLWidgets is already defined, then use it; otherwise create a
   // new object. This allows preceding code to set options that affect the
@@ -1262,6 +1282,7 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -1362,6 +1383,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
+margin-bottom: 0em;
 }
 .hanging div.csl-entry {
 margin-left:2em;
@@ -1572,7 +1594,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Neuenschwander, Branson &amp; Gsponer</h1>
+<h1 class="title toc-ignore">NBG - Neuenschwander, Branson &amp;
+Gsponer</h1>
 
 
 
@@ -1614,26 +1637,26 @@ approach. In a trial of 15 doses, the investigators saw outcomes:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(outcomes)</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>fit</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Patient-level data:</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 17 × 4</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;    Patient Cohort  Dose   Tox</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;      &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;  1       1      1     1     0</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;  2       2      1     1     0</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  3       3      1     1     0</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  4       4      2     2     0</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;  5       5      2     2     0</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;  6       6      2     2     0</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;  7       7      2     2     0</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt;  8       8      3     3     0</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;  9       9      3     3     0</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; 10      10      3     3     0</span></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; 11      11      3     3     0</span></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; 12      12      4     4     0</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 13      13      4     4     0</span></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 14      14      4     4     0</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 15      15      4     4     0</span></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 16      16      5     7     1</span></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 17      17      5     7     1</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 17 × 5</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;    Patient Cohort  Dose   Tox Weight</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;      &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;  1       1      1     1     0      1</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;  2       2      1     1     0      1</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  3       3      1     1     0      1</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  4       4      2     2     0      1</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;  5       5      2     2     0      1</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;  6       6      2     2     0      1</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;  7       7      2     2     0      1</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt;  8       8      3     3     0      1</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;  9       9      3     3     0      1</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; 10      10      3     3     0      1</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; 11      11      3     3     0      1</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; 12      12      4     4     0      1</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 13      13      4     4     0      1</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 14      14      4     4     0      1</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 15      15      4     4     0      1</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 16      16      5     7     1      1</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 17      17      5     7     1      1</span></span>
 <span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; Dose-level data:</span></span>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; # A tibble: 16 × 9</span></span>
@@ -1700,14 +1723,14 @@ above, we can examine all possible paths a trial might take in the first
 two cohorts of three patients, starting at dose 2:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>paths1 <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>), <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">graph_paths</span>(paths1)</span></code></pre></div>
-<div class="grViz html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-60f72054807f5769a8bd" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-60f72054807f5769a8bd">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"2\" [label = \"10\", fontcolor = \"#472F7DFF\", fillcolor = \"#35B779FF\"] \n  \"3\" [label = \"12\", fontcolor = \"#39568CFF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"5\" [label = \"4\", fontcolor = \"#7AD151FF\", fillcolor = \"#39568CFF\"] \n  \"6\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"7\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"9\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"10\" [label = \"9\", fontcolor = \"#481A6CFF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"12\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"14\" [label = \"6\", fontcolor = \"#D2E21BFF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"17\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"18\" [label = \"4\", fontcolor = \"#7AD151FF\", fillcolor = \"#39568CFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"20\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"21\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-9ad98e1d103ed6f9f6db" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-9ad98e1d103ed6f9f6db">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"2\" [label = \"10\", fillcolor = \"#35B779FF\", fontcolor = \"#472F7DFF\"] \n  \"3\" [label = \"12\", fillcolor = \"#7AD151FF\", fontcolor = \"#39568CFF\"] \n  \"4\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"5\" [label = \"4\", fillcolor = \"#39568CFF\", fontcolor = \"#7AD151FF\"] \n  \"6\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"7\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"8\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"9\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"10\" [label = \"9\", fillcolor = \"#22A884FF\", fontcolor = \"#481A6CFF\"] \n  \"11\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"12\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"13\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"14\" [label = \"6\", fillcolor = \"#2A788EFF\", fontcolor = \"#D2E21BFF\"] \n  \"15\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"16\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"17\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"18\" [label = \"4\", fillcolor = \"#39568CFF\", fontcolor = \"#7AD151FF\"] \n  \"19\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"20\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"21\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 <p>We can then compare these to the similar advice from the model that
 adds Mozgunov &amp; Jaki’s criterion:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>paths2 <span class="ot">&lt;-</span> model2 <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>), <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">graph_paths</span>(paths2)</span></code></pre></div>
-<div class="grViz html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-572c120aeae9786e3d09" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-572c120aeae9786e3d09">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"2\" [label = \"11\", fontcolor = \"#414487FF\", fillcolor = \"#54C568FF\"] \n  \"3\" [label = \"12\", fontcolor = \"#39568CFF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"5\" [label = \"2\", fontcolor = \"#35B779FF\", fillcolor = \"#472F7DFF\"] \n  \"6\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"7\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"9\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"10\" [label = \"9\", fontcolor = \"#481A6CFF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"12\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"14\" [label = \"5\", fontcolor = \"#A5DB36FF\", fillcolor = \"#31688EFF\"] \n  \"15\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"17\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"18\" [label = \"4\", fontcolor = \"#7AD151FF\", fillcolor = \"#39568CFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"20\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n  \"21\" [label = \"1\", fontcolor = \"#22A884FF\", fillcolor = \"#481A6CFF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-d437fc3aa215b6a46abc" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-d437fc3aa215b6a46abc">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"2\" [label = \"11\", fillcolor = \"#54C568FF\", fontcolor = \"#414487FF\"] \n  \"3\" [label = \"12\", fillcolor = \"#7AD151FF\", fontcolor = \"#39568CFF\"] \n  \"4\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"5\" [label = \"2\", fillcolor = \"#472F7DFF\", fontcolor = \"#35B779FF\"] \n  \"6\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"7\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"8\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"9\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"10\" [label = \"9\", fillcolor = \"#22A884FF\", fontcolor = \"#481A6CFF\"] \n  \"11\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"12\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"13\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"14\" [label = \"5\", fillcolor = \"#31688EFF\", fontcolor = \"#A5DB36FF\"] \n  \"15\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"16\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"17\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"18\" [label = \"4\", fillcolor = \"#39568CFF\", fontcolor = \"#7AD151FF\"] \n  \"19\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"20\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n  \"21\" [label = \"1\", fillcolor = \"#481A6CFF\", fontcolor = \"#22A884FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 <p>We can see in several situations that the second model is more
 conservative in escalation, achieving the goal of the authors. Perhaps
 unexpectedly, however, the second design escalations to dose 11 after
@@ -1786,7 +1809,7 @@ the simulation vignette.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-mozgunov_improving_2020" class="csl-entry">
 Mozgunov, Pavel, and Thomas Jaki. 2020. <span>“Improving Safety of the
 Continual Reassessment Method via a Modified Allocation Rule.”</span>

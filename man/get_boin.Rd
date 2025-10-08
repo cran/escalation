@@ -4,7 +4,13 @@
 \alias{get_boin}
 \title{Get an object to fit the BOIN model using the BOIN package.}
 \usage{
-get_boin(num_doses, target, use_stopping_rule = TRUE, ...)
+get_boin(
+  num_doses,
+  target,
+  use_stopping_rule = TRUE,
+  stop_when_deescalation_impossible = FALSE,
+  ...
+)
 }
 \arguments{
 \item{num_doses}{Number of doses under investigation.}
@@ -15,6 +21,13 @@ get_boin(num_doses, target, use_stopping_rule = TRUE, ...)
 Yan et al. (2019). FALSE to suppress the authors' stopping rule, with the
 assumption being that you will test the necessity to stop early in some other
 way.}
+
+\item{stop_when_deescalation_impossible}{TRUE to stop a trial and recommend
+no dose when the advice is to de-escalate but de-escalation is impossible
+because we are already at the lowest dose. Note that this feature was
+requested by a user. This param is FALSE by default so that behaviour matches
+what was described in the publication. The original authors do advocate this
+behaviour.}
 
 \item{...}{Extra args are passed to \code{\link[BOIN]{get.boundary}}.}
 }
@@ -38,10 +51,10 @@ Yan, F., Pan, H., Zhang, L., Liu, S., & Yuan, Y. (2019).
 BOIN: An R Package for Designing Single-Agent and Drug-Combination
 Dose-Finding Trials Using Bayesian Optimal Interval Designs.
 Journal of Statistical Software, 27(November 2017), 0–35.
-https://doi.org/10.18637/jss.v000.i00
+https://doi.org/10.18637/jss.v094.i13
 
 Liu, S., & Yuan, Y. (2015).
-Bayesian optimal designs for Phase I clinical trials.
+Bayesian optimal interval designs for phase I clinical trials.
 J. R. Stat. Soc. C, 64, 507–523.
 https://doi.org/10.1111/rssc.12089
 }

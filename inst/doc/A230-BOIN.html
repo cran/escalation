@@ -12,7 +12,7 @@
 
 
 
-<title>Bayesian Optimal Interval Design</title>
+<title>BOIN - Bayesian Optimal Interval Design</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -27,6 +27,26 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
+<style type="text/css">@layer htmltools {
+.html-fill-container {
+display: flex;
+flex-direction: column;
+
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > .html-fill-item {
+
+flex: 1 1 auto;
+min-height: 0;
+min-width: 0;
+}
+.html-fill-container > :not(.html-fill-item) {
+
+flex: 0 0 auto;
+}
+}
+</style>
 <script>(function() {
   // If window.HTMLWidgets is already defined, then use it; otherwise create a
   // new object. This allows preceding code to set options that affect the
@@ -1262,6 +1282,7 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -1362,6 +1383,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
+margin-bottom: 0em;
 }
 .hanging div.csl-entry {
 margin-left:2em;
@@ -1572,7 +1594,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Bayesian Optimal Interval Design</h1>
+<h1 class="title toc-ignore">BOIN - Bayesian Optimal Interval
+Design</h1>
 
 
 
@@ -1677,6 +1700,30 @@ advice:</p>
 yet been rendered inadmissible:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>fit <span class="sc">%&gt;%</span> <span class="fu">dose_admissible</span>()</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span></code></pre></div>
+<div id="final-dose-selection" class="section level2">
+<h2>Final dose selection</h2>
+<p>BOIN, like some other designs, selects the final dose differently to
+how it selects doses mid-trial. To achieve this in
+<code>escalation</code>, we need an extra selector that will kick-in
+when the parent selector(s) have selected a non-NA dose but expressed
+<code>continue == FALSE</code>, i.e. signaled <em>the trial ends now but
+we are interested in a dose</em>. If used, it will almost surely come
+last in the selector chain:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">5</span>, <span class="at">target =</span> <span class="fl">0.3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>   <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>   <span class="fu">select_boin_mtd</span>()</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>outcomes <span class="ot">&lt;-</span> <span class="st">&#39;1NNN 2NTN 2NNN 3NTT&#39;</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>model <span class="sc">%&gt;%</span> <span class="fu">fit</span>(outcomes) <span class="sc">%&gt;%</span> <span class="fu">recommended_dose</span>()</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<p>In the above example, <code>stop_at_n</code> stopped the trial
+because the threshold sample size was met, and the underlying algorithm
+identified that at least one dose was worthy of selection. At this
+juncture, <code>select_boin_mtd</code> took over and applied the method
+described by the authors. Whilst the underlying selector(s) were busy
+conducting the trial (<code>continue == TRUE</code>),
+<code>select_boin_mtd</code> kept silent.</p>
+</div>
 <div id="dose-paths" class="section level2">
 <h2>Dose paths</h2>
 <p>We can reproduce some of the advice above using dose-paths to
@@ -1684,12 +1731,12 @@ exhaustively calculate all possible future model advice. For example,
 after observing <code>1NNN</code> in the first cohort, we can reproduce
 the advice to escalate further after seeing <code>2NNN</code> and then
 de-escalate after seeing <code>3NTT</code> using:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> cohort_sizes, </span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NNN&#39;</span>, <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
-<div class="grViz html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-65ef7abbcc25aa62da1c" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-65ef7abbcc25aa62da1c">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"2\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"3\" [label = \"4\", fontcolor = \"#414487FF\", fillcolor = \"#7AD151FF\"] \n  \"4\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"5\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"6\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"7\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"8\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"9\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"10\" [label = \"3\", fontcolor = \"#440154FF\", fillcolor = \"#22A884FF\"] \n  \"11\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"12\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"14\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"15\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"16\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"17\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#FDE725FF\", fillcolor = \"#2A788EFF\"] \n  \"19\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"20\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n  \"21\" [label = \"1\", fontcolor = \"#7AD151FF\", fillcolor = \"#414487FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>cohort_sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>paths <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">get_dose_paths</span>(<span class="at">cohort_sizes =</span> cohort_sizes, </span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                                  <span class="at">previous_outcomes =</span> <span class="st">&#39;1NNN&#39;</span>, <span class="at">next_dose =</span> <span class="dv">2</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">graph_paths</span>(paths)</span></code></pre></div>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-7bf8e1a604e6a5e24849" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-7bf8e1a604e6a5e24849">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"2\" [label = \"3\", fillcolor = \"#22A884FF\", fontcolor = \"#440154FF\"] \n  \"3\" [label = \"4\", fillcolor = \"#7AD151FF\", fontcolor = \"#414487FF\"] \n  \"4\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"5\" [label = \"3\", fillcolor = \"#22A884FF\", fontcolor = \"#440154FF\"] \n  \"6\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"7\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"8\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"9\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"10\" [label = \"3\", fillcolor = \"#22A884FF\", fontcolor = \"#440154FF\"] \n  \"11\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"12\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"13\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"14\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"15\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"16\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"17\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"18\" [label = \"2\", fillcolor = \"#2A788EFF\", fontcolor = \"#FDE725FF\"] \n  \"19\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"20\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n  \"21\" [label = \"1\", fillcolor = \"#414487FF\", fontcolor = \"#7AD151FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"1\"->\"6\" [label = \"NTT\"] \n\"6\"->\"7\" [label = \"NNN\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"8\"->\"9\" [label = \"NNN\"] \n\"2\"->\"10\" [label = \"NNT\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"6\"->\"12\" [label = \"NNT\"] \n\"8\"->\"13\" [label = \"NNT\"] \n\"2\"->\"14\" [label = \"NTT\"] \n\"4\"->\"15\" [label = \"NTT\"] \n\"6\"->\"16\" [label = \"NTT\"] \n\"8\"->\"17\" [label = \"NTT\"] \n\"2\"->\"18\" [label = \"TTT\"] \n\"4\"->\"19\" [label = \"TTT\"] \n\"6\"->\"20\" [label = \"TTT\"] \n\"8\"->\"21\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 <p>Thus, we can trace the path <code>1NNN 2NNN 3NNT</code>, along with
 every other possible path in two cohorts of three after having observed
 <code>1NNN</code>.</p>
@@ -1704,34 +1751,34 @@ Table 4 some simulated operating characteristics. We can use the
 <p>Their example concerns a clinical trial of six doses that targets 25%
 toxicity. We specify the <code>model</code> object to reflect this. They
 also elect to limit the trial to a sample size of <span class="math inline">\(n=36\)</span>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">6</span>, <span class="at">target =</span> <span class="fl">0.25</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">36</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">get_boin</span>(<span class="at">num_doses =</span> <span class="dv">6</span>, <span class="at">target =</span> <span class="fl">0.25</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">stop_at_n</span>(<span class="at">n =</span> <span class="dv">36</span>)</span></code></pre></div>
 <p>Their scenario 1 investigates the true probability vector:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>true_prob_tox <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.5</span>, <span class="fl">0.6</span>, <span class="fl">0.7</span>, <span class="fl">0.8</span>)</span></code></pre></div>
 <p>For the sake of speed, we will run just fifty iterations:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>num_sims <span class="ot">&lt;-</span> <span class="dv">50</span></span></code></pre></div>
 <p>In real life, however, we would naturally run many thousands of
 iterations.</p>
 <p>Running the simulation:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> </span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>sims <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> </span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="fu">simulate_trials</span>(<span class="at">num_sims =</span> num_sims, <span class="at">true_prob_tox =</span> true_prob_tox)</span></code></pre></div>
 <p>we see that from this small sample size, the probability that each
 dose is recommended is similar to that reported:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6 </span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt;   0.18   0.60   0.20   0.02   0.00   0.00   0.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">prob_recommend</span>(sims)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; NoDose      1      2      3      4      5      6 </span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt;   0.18   0.60   0.20   0.02   0.00   0.00   0.00</span></span></code></pre></div>
 <p>and so is the expected number of patients treated at each dose
 level:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">colMeans</span>(<span class="fu">n_at_dose</span>(sims))</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6 </span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; 21.24  8.52  1.44  0.12  0.00  0.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">colMeans</span>(<span class="fu">n_at_dose</span>(sims))</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt;     1     2     3     4     5     6 </span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; 21.24  8.52  1.44  0.12  0.00  0.00</span></span></code></pre></div>
 <p>For more information on running dose-finding simulations, refer to
 the simulation vignette.</p>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-liu_bayesian_2015" class="csl-entry">
 Liu, Suyu, and Ying Yuan. 2015. <span>“Bayesian Optimal Interval Designs
 for Phase <span>I</span> Clinical Trials.”</span> <em>Journal of the

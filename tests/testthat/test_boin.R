@@ -134,7 +134,8 @@ test_that('boin_selector supports correct interface.', {
   expect_true(all((model_frame(x) - data.frame(patient = c(1,2,3,4,5,6),
                                                cohort = c(1,1,1,2,2,2),
                                                dose = c(1,1,1,2,2,2),
-                                               tox = c(0,0,0,0,1,1))) == 0))
+                                               tox = c(0,0,0,0,1,1),
+                                               weight = c(1,1,1,1,1,1))) == 0))
   expect_equal(nrow(model_frame(x)), num_patients(x))
 
   expect_equal(num_doses(x), 5)
@@ -246,7 +247,7 @@ test_that('boin_selector supports correct interface.', {
 
   mf <- model_frame(x)
   expect_equal(nrow(mf), 0)
-  expect_equal(ncol(mf), 4)
+  expect_equal(ncol(mf), 5)
 
   expect_equal(num_doses(x), 5)
   expect_true(is.integer(num_doses(x)))
@@ -351,7 +352,8 @@ test_that('boin_selector supports correct interface.', {
   expect_true(all((model_frame(x) - data.frame(patient = c(1,2,3,4,5,6),
                                                cohort = c(1,1,1,2,2,2),
                                                dose = c(1,1,1,2,2,2),
-                                               tox = c(0,0,0,0,1,1))) == 0))
+                                               tox = c(0,0,0,0,1,1),
+                                               weight = c(1,1,1,1,1,1))) == 0))
   expect_equal(nrow(model_frame(x)), num_patients(x))
 
   expect_equal(num_doses(x), 5)
@@ -674,5 +676,51 @@ test_that('boin_selector respects eliminated doses', {
     "The model advocates continuing at dose 1."
   )
   expect_equal(fit %>% dose_admissible(), c(TRUE, FALSE, FALSE))
+
+})
+
+
+test_that("boin_selector stops when de-escalation is impossible", {
+
+  target <- 0.25
+  model1 <- get_boin(num_doses = 5, target = target,
+                     stop_when_deescalation_impossible = TRUE)
+
+  x <- model1 %>% fit("1NNN")
+  expect_equal(
+    x %>% recommended_dose(),
+    2
+  )
+  expect_equal(
+    x %>% continue(),
+    TRUE
+  )
+
+  x <- model1 %>% fit("1NNT")
+  expect_true(
+    is.na(x %>% recommended_dose())
+  )
+  expect_equal(
+    x %>% continue(),
+    FALSE
+  )
+
+  x <- model1 %>% fit("1NTT")
+  expect_true(
+    is.na(x %>% recommended_dose())
+  )
+  expect_equal(
+    x %>% continue(),
+    FALSE
+  )
+
+  x <- model1 %>% fit("1TTT")
+  expect_true(
+    is.na(x %>% recommended_dose())
+  )
+  expect_equal(
+    x %>% continue(),
+    FALSE
+  )
 
 })

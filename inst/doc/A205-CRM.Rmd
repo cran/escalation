@@ -1,11 +1,11 @@
 ---
-title: "Continual Reassessment Method"
+title: "CRM - Continual Reassessment Method"
 output: 
   rmarkdown::html_vignette:
     df_print: tibble
 bibliography: library.bib
 vignette: >
-  %\VignetteIndexEntry{Continual Reassessment Method}
+  %\VignetteIndexEntry{CRM - Continual Reassessment Method}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

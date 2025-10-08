@@ -4,7 +4,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(escalation)
 
 target <- 0.25
@@ -33,10 +33,10 @@ sims <- simulate_compare(
 ## -----------------------------------------------------------------------------
 summary(sims)
 
-## ---- fig.width=7, fig.height=5-----------------------------------------------
+## ----fig.width=7, fig.height=5------------------------------------------------
 convergence_plot(sims)
 
-## ---- fig.width=7, fig.height=10, message=FALSE-------------------------------
+## ----fig.width=7, fig.height=10, message=FALSE--------------------------------
 library(dplyr)
 library(ggplot2)
 

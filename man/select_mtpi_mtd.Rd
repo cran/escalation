@@ -11,6 +11,7 @@ select_mtpi_mtd(
   exclusion_certainty,
   alpha = 1,
   beta = 1,
+  pava_just_tested_doses = FALSE,
   ...
 )
 }
@@ -36,22 +37,32 @@ probability of toxicity.}
 \item{beta}{Second shape parameter of the beta prior distribution on the
 probability of toxicity.}
 
+\item{pava_just_tested_doses}{the design uses the PAVA method to estimate
+monotonic Prob(Tox) at the doses. By default, this estimates Prob(Tox) for
+doses that have not been tested in the trial and can lead to untested
+doses being recommended. Set this option to TRUE to use PAVA only on tested
+doses, leaving untested doses as NA and not-recommendable. Set to FALSE to
+use PAVA at all doses and potentially recommend an untested dose. Default
+is FALSE.}
+
 \item{...}{Extra args are passed onwards.}
 }
 \value{
 an object of type \code{\link{selector_factory}}.
 }
 \description{
-This method selects dose by the algorithm for identifying the maximum
-tolerable dose (MTD) described in Ji et al. (2010). This class is intended
-to be used when a mTPI trial has reached its maximum sample size. Thus, it
-intends to make the final dose recommendation after the regular mTPI dose
-selection algorithm, as implemented by \code{\link{get_mtpi}}, including any
-additional behaviours that govern stopping (etc), has gracefully concluded a
-dose-finding trial. However, the class can be used in any scenario where
-there is a target toxicity rate. See Examples. Note - this class will not
-override the parent dose selector when the parent is advocating no dose. Thus
-this class will not reinstate a dangerous dose.
+Note: if you use this selector, it almost certainly needs to be the last
+example in the chain - see Example below. This method selects dose by the
+algorithm for identifying the maximum tolerable dose (MTD) described in Ji et
+al. (2010). This class is intended to be used when a mTPI trial has reached
+its maximum sample size. Thus, it intends to make the final dose
+recommendation after the regular mTPI dose selection algorithm, as
+implemented by \code{\link{get_mtpi}}, including any additional behaviours
+that govern stopping (etc), has gracefully concluded a dose-finding trial.
+However, the class can be used in any scenario where there is a target
+toxicity rate. See Examples. Note - this class will not override the parent
+dose selector when the parent is advocating no dose. Thus this class will not
+reinstate a dangerous dose.
 }
 \examples{
 # This class is intended to make the final dose selection in a mTPI trial:
@@ -83,11 +94,10 @@ model3 \%>\% fit('1NNN 2NNT') \%>\% recommended_dose()
 
 }
 \references{
-Ji, Y., Liu, P., Li, Y., & Bekele, B. N. (2010).
- A modified toxicity probability interval method for dose-finding trials.
- Clinical Trials, 7(6), 653-663. https://doi.org/10.1177/1740774510382799
+Ji, Y., Liu, P., Li, Y., & Bekele, B. N. (2010). A modified
+toxicity probability interval method for dose-finding trials. Clinical
+Trials, 7(6), 653-663. https://doi.org/10.1177/1740774510382799
 
-Ji, Y., & Yang, S. (2017).
-On the Interval-Based Dose-Finding Designs, 1-26.
+Ji, Y., & Yang, S. (2017). On the Interval-Based Dose-Finding Designs, 1-26.
 Retrieved from https://arxiv.org/abs/1706.03277
 }

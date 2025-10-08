@@ -1,4 +1,24 @@
 
+# escalation 0.2.3
+
+* Added three new vignettes on phase I/II designs, TITE-designs, and combination designs.
+* Added BOIN-COMB MTD selector
+* Added tests and docs
+* Fixed bugs and typos
+
+# escalation 0.2.2
+
+* Added boin12_rds() to tabulate desirability scores in a BOIN12 trial.
+
+# escalation 0.2.1
+
+* Added unadmit_untested(), a selector to explicitly mark any untested and non-recomended dose as inadmissible via dose_admissible().
+
+# escalation 0.2.0
+
+* Added support for treatment combinations by allowing dose to become a vector of indices rather than a scalar.
+* Added BOIN COMB design for treatment combinations.
+
 # escalation 0.1.10
 
 * Added TITE methods
